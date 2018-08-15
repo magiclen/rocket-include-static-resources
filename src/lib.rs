@@ -116,7 +116,7 @@ macro_rules! static_response_builder {
 
             let mut response_builder = Response::build();
 
-            response_builder.header(ETag(EntityTag::new(true, resource.crc64.to_string())));
+            response_builder.header(ETag(EntityTag::new(true, format!("{:X}" ,resource.crc64))));
 
             if let Some(content_type) = resource.content_type {
                 response_builder.raw_header("Content-Type", content_type);
