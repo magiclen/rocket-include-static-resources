@@ -10,6 +10,7 @@
 //! #[macro_use] extern crate lazy_static;
 //!
 //! #[macro_use] extern crate rocket_include_static_resources;
+//! extern crate rocket_etag_if_none_match;
 //!
 //! extern crate rocket;
 //! extern crate crc;
@@ -20,11 +21,13 @@
 //!    "favicon-png", "included-static-resources/favicon-16.png"
 //! );
 //!
+//! use rocket_etag_if_none_match::EtagIfNoneMatch;
+//!
 //! use rocket::response::Response;
 //!
 //! #[get("/favicon.ico")]
-//! fn favicon() -> Response<'static> {
-//!    static_response!("favicon")
+//! fn favicon(etag_if_none_match: EtagIfNoneMatch) -> Response<'static> {
+//!    static_response!(etag_if_none_match, "favicon")
 //! }
 //!
 //! #[get("/favicon.png")]
@@ -125,6 +128,43 @@ macro_rules! static_response_builder {
             response_builder
         }
     };
+    ( $etag_if_none_match:expr, $id:expr ) => {
+        {
+            use self::rocket::response::Response;
+            use self::rocket::http::{Status, hyper::header::{ETag, EntityTag}};
+            use self::rocket_include_static_resources::STATIC_RESOURCE_RESPONSE_CHUNK_SIZE;
+
+            let resource = STATIC_RESOURCES.get($id).unwrap();
+
+            let mut response_builder = Response::build();
+
+            let etag = $etag_if_none_match.etag;
+
+            let mut is_etag_match = false;
+
+            if let Some(etag) = etag {
+                if etag.to_string().eq(&resource.etag){
+                    is_etag_match = true;
+                }
+            }
+
+            if is_etag_match {
+                response_builder.status(Status::NotModified);
+            } else {
+                response_builder.header(ETag(EntityTag::new(true, resource.etag.clone())));
+
+                if let Some(content_type) = resource.content_type {
+                    response_builder.raw_header("Content-Type", content_type);
+                }
+
+                response_builder.raw_header("Content-Length", resource.data.len().to_string());
+
+                response_builder.chunked_body(resource.data, STATIC_RESOURCE_RESPONSE_CHUNK_SIZE);
+            }
+
+            response_builder
+        }
+    };
 }
 
 /// Used for retrieving the file you input through the macro `static_resources_initialize!` as a Response instance into which three HTTP headers, **Content-Type**, **Content-Length** and **Etag**, will be automatically added.
@@ -133,6 +173,11 @@ macro_rules! static_response {
     ( $id:expr ) => {
         {
             static_response_builder!($id).finalize()
+        }
+    };
+    ( $etag_if_none_match:expr, $id:expr ) => {
+        {
+            static_response_builder!($etag_if_none_match, $id).finalize()
         }
     };
 }

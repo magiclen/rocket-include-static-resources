@@ -6,6 +6,7 @@ extern crate lazy_static;
 
 #[macro_use]
 extern crate rocket_include_static_resources;
+extern crate rocket_etag_if_none_match;
 
 extern crate rocket;
 extern crate crc;
@@ -16,13 +17,15 @@ static_resources_initialize!(
     "favicon-png", "included-static-resources/favicon-16.png"
 );
 
+use rocket_etag_if_none_match::EtagIfNoneMatch;
+
 use rocket::local::Client;
 use rocket::response::Response;
 use rocket::http::Status;
 
 #[get("/favicon.ico")]
-fn favicon() -> Response<'static> {
-    static_response!("favicon")
+fn favicon(etag_if_none_match: EtagIfNoneMatch) -> Response<'static> {
+    static_response!(etag_if_none_match, "favicon")
 }
 
 #[get("/favicon.png")]
