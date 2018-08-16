@@ -143,7 +143,7 @@ macro_rules! static_response_builder {
             let mut is_etag_match = false;
 
             if let Some(etag) = etag {
-                if etag.to_string().eq(&resource.etag){
+                if etag.tag().eq(&resource.etag){
                     is_etag_match = true;
                 }
             }
