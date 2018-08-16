@@ -1,5 +1,5 @@
 //! # Include Static Resources for Rocket Framework
-//! This is a crate which provides macros `static_resources_initialize!` and `static_response!` to static include files from your Rust project and make them be the HTTP response sources quickly.
+//! This is a crate which provides macros `static_resources_initialize!` and `static_response!` to statically include files from your Rust project and make them be the HTTP response sources quickly.
 //!
 //! ## Example
 //!
