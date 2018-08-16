@@ -42,59 +42,53 @@
 pub struct StaticResource {
     pub data: &'static [u8],
     pub content_type: Option<&'static str>,
-    pub crc64: u64,
+    pub etag: String,
 }
 
 #[doc(hidden)]
 pub const STATIC_RESOURCE_RESPONSE_CHUNK_SIZE: u64 = 4096;
-
-#[macro_export]
-#[doc(hidden)]
-macro_rules! add_static_resource {
-    ( $map:expr, $($id:expr, $path:expr), * ) => {
-        {
-            use crc::{crc64 ,Hasher64};
-            use rocket_include_static_resources::StaticResource;
-            use std::path::Path;
-
-            $(
-                let data = include_bytes!($path);
-
-                let mut digest = crc64::Digest::new(crc::crc64::ECMA);
-                digest.write(data);
-
-                let crc64 = digest.sum64();
-
-                let path = Path::new($path);
-
-                let extension = path.extension().unwrap().to_str().unwrap().to_lowercase();
-
-                let content_type = mime_guess::get_mime_type_str(&extension);
-
-                if $map.contains_key($id) {
-                    panic!("The static resource ID `{}` is duplicated.", $id);
-                }
-
-                $map.insert($id , StaticResource{
-                    data,
-                    content_type,
-                    crc64,
-                });
-            )*
-        }
-    }
-}
 
 /// Used for including files into your executable binary file. You need to specify each file's ID and its path. For instance, the above example uses **favicon** to represent the file **included-static-resources/favicon.ico** and **favicon_png** to represent the file **included-static-resources/favicon.png**. An ID cannot be repeating.
 #[macro_export]
 macro_rules! static_resources_initialize {
     ( $($id:expr, $path:expr), * ) => {
         lazy_static! {
-            pub static ref STATIC_RESOURCES: std::collections::HashMap<&'static str, rocket_include_static_resources::StaticResource> = {
+            pub static ref STATIC_RESOURCES: std::collections::HashMap<&'static str, self::rocket_include_static_resources::StaticResource> = {
                 let mut map = std::collections::HashMap::new();
 
                 $(
-                    add_static_resource!(map, $id, concat!(env!("CARGO_MANIFEST_DIR"), "/", $path));
+                    {
+                        use self::crc::{crc64, Hasher64};
+                        use self::mime_guess::get_mime_type_str;
+                        use self::rocket_include_static_resources::StaticResource;
+
+                        use std::path::Path;
+
+                        let data = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/", $path));
+
+                        let mut digest = crc64::Digest::new(crc64::ECMA);
+                        digest.write(data);
+
+                        let crc64 = digest.sum64();
+
+                        let etag = format!("{:X}", crc64);
+
+                        let path = Path::new($path);
+
+                        let extension = path.extension().unwrap().to_str().unwrap().to_lowercase();
+
+                        let content_type = get_mime_type_str(&extension);
+
+                        if map.contains_key($id) {
+                            panic!("The static resource ID `{}` is duplicated.", $id);
+                        }
+
+                        map.insert($id , StaticResource{
+                            data,
+                            content_type,
+                            etag,
+                        });
+                    }
                 )*
 
                 map
@@ -116,7 +110,7 @@ macro_rules! static_response_builder {
 
             let mut response_builder = Response::build();
 
-            response_builder.header(ETag(EntityTag::new(true, format!("{:X}" ,resource.crc64))));
+            response_builder.header(ETag(EntityTag::new(true, resource.etag.clone())));
 
             if let Some(content_type) = resource.content_type {
                 response_builder.raw_header("Content-Type", content_type);
