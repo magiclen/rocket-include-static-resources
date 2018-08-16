@@ -102,13 +102,13 @@ macro_rules! static_resources_initialize {
 /// Used for retrieving the file you input through the macro `static_resources_initialize!` as a ResponseBuilder instance into which three HTTP headers, **Content-Type**, **Content-Length** and **Etag**, will be automatically added. After fetching the ResponseBuilder instance, you can add extra headers into it!
 #[macro_export]
 macro_rules! static_response_builder {
-    ( $path:expr ) => {
+    ( $id:expr ) => {
         {
             use self::rocket::response::Response;
             use self::rocket::http::hyper::header::{ETag, EntityTag};
             use self::rocket_include_static_resources::STATIC_RESOURCE_RESPONSE_CHUNK_SIZE;
 
-            let resource = STATIC_RESOURCES.get($path).unwrap();
+            let resource = STATIC_RESOURCES.get($id).unwrap();
 
             let mut response_builder = Response::build();
 
@@ -130,9 +130,9 @@ macro_rules! static_response_builder {
 /// Used for retrieving the file you input through the macro `static_resources_initialize!` as a Response instance into which three HTTP headers, **Content-Type**, **Content-Length** and **Etag**, will be automatically added.
 #[macro_export]
 macro_rules! static_response {
-    ( $path:expr ) => {
+    ( $id:expr ) => {
         {
-            static_response_builder!($path).finalize()
+            static_response_builder!($id).finalize()
         }
     };
 }
