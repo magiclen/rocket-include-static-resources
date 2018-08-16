@@ -54,44 +54,46 @@ macro_rules! static_resources_initialize {
     ( $($id:expr, $path:expr), * ) => {
         lazy_static! {
             pub static ref STATIC_RESOURCES: std::collections::HashMap<&'static str, self::rocket_include_static_resources::StaticResource> = {
-                let mut map = std::collections::HashMap::new();
+                {
+                    use self::crc::{crc64, Hasher64};
+                    use self::mime_guess::get_mime_type_str;
+                    use self::rocket_include_static_resources::StaticResource;
+                    use std::path::Path;
+                    use std::collections::HashMap;
 
-                $(
-                    {
-                        use self::crc::{crc64, Hasher64};
-                        use self::mime_guess::get_mime_type_str;
-                        use self::rocket_include_static_resources::StaticResource;
+                    let mut map = HashMap::new();
 
-                        use std::path::Path;
+                    $(
+                        {
+                            let data = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/", $path));
 
-                        let data = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/", $path));
+                            let mut digest = crc64::Digest::new(crc64::ECMA);
+                            digest.write(data);
 
-                        let mut digest = crc64::Digest::new(crc64::ECMA);
-                        digest.write(data);
+                            let crc64 = digest.sum64();
 
-                        let crc64 = digest.sum64();
+                            let etag = format!("{:X}", crc64);
 
-                        let etag = format!("{:X}", crc64);
+                            let path = Path::new($path);
 
-                        let path = Path::new($path);
+                            let extension = path.extension().unwrap().to_str().unwrap().to_lowercase();
 
-                        let extension = path.extension().unwrap().to_str().unwrap().to_lowercase();
+                            let content_type = get_mime_type_str(&extension);
 
-                        let content_type = get_mime_type_str(&extension);
+                            if map.contains_key($id) {
+                                panic!("The static resource ID `{}` is duplicated.", $id);
+                            }
 
-                        if map.contains_key($id) {
-                            panic!("The static resource ID `{}` is duplicated.", $id);
+                            map.insert($id , StaticResource{
+                                data,
+                                content_type,
+                                etag,
+                            });
                         }
+                    )*
 
-                        map.insert($id , StaticResource{
-                            data,
-                            content_type,
-                            etag,
-                        });
-                    }
-                )*
-
-                map
+                    map
+                }
             };
         }
     };
@@ -102,9 +104,9 @@ macro_rules! static_resources_initialize {
 macro_rules! static_response_builder {
     ( $path:expr ) => {
         {
-            use rocket::response::Response;
-            use rocket::http::hyper::header::{ETag, EntityTag};
-            use rocket_include_static_resources::STATIC_RESOURCE_RESPONSE_CHUNK_SIZE;
+            use self::rocket::response::Response;
+            use self::rocket::http::hyper::header::{ETag, EntityTag};
+            use self::rocket_include_static_resources::STATIC_RESOURCE_RESPONSE_CHUNK_SIZE;
 
             let resource = STATIC_RESOURCES.get($path).unwrap();
 
