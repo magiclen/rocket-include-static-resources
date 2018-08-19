@@ -79,9 +79,12 @@ macro_rules! static_resources_initialize {
 
                             let path = Path::new($path);
 
-                            let extension = path.extension().unwrap().to_str().unwrap().to_lowercase();
-
-                            let content_type = get_mime_type_str(&extension);
+                            let content_type = match path.extension() {
+                                Some(extension) => {
+                                    get_mime_type_str(&extension.to_str().unwrap().to_lowercase())
+                                }
+                                None => None
+                            };
 
                             if map.contains_key($id) {
                                 panic!("The static resource ID `{}` is duplicated.", $id);
