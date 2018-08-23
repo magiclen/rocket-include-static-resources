@@ -41,6 +41,8 @@
 //!
 //! Refer to `tests/favicon.rs` to see the example completely.
 
+pub extern crate rocket_etag_if_none_match;
+
 #[doc(hidden)]
 pub struct StaticResource {
     pub data: &'static [u8],
