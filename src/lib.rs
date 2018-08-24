@@ -60,7 +60,7 @@ macro_rules! static_resources_initialize {
         lazy_static! {
             pub static ref STATIC_RESOURCES: std::collections::HashMap<&'static str, self::rocket_include_static_resources::StaticResource> = {
                 {
-                    use self::crc::{crc64, Hasher64};
+                    use self::crc_any::CRC;
                     use self::mime_guess::get_mime_type_str;
                     use self::rocket_include_static_resources::StaticResource;
                     use std::path::Path;
@@ -72,10 +72,10 @@ macro_rules! static_resources_initialize {
                         {
                             let data = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/", $path));
 
-                            let mut digest = crc64::Digest::new(crc64::ECMA);
-                            digest.write(data);
+                            let mut crc64ecma = CRC::crc64ecma();
+                            crc64ecma.write(data);
 
-                            let crc64 = digest.sum64();
+                            let crc64 = crc64ecma.get_crc();
 
                             let etag = format!("{:X}", crc64);
 
