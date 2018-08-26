@@ -73,7 +73,7 @@ macro_rules! static_resources_initialize {
                             let data = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/", $path));
 
                             let mut crc64ecma = CRC::crc64ecma();
-                            crc64ecma.write(data);
+                            crc64ecma.digest(data);
 
                             let crc64 = crc64ecma.get_crc();
 
