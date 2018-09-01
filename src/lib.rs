@@ -41,7 +41,12 @@
 //!
 //! Refer to `tests/favicon.rs` to see the example completely.
 
+pub extern crate rocket;
 pub extern crate rocket_etag_if_none_match;
+#[doc(hidden)]
+pub extern crate crc_any;
+#[doc(hidden)]
+pub extern crate mime_guess;
 
 #[doc(hidden)]
 pub struct StaticResource {
@@ -58,11 +63,11 @@ pub const STATIC_RESOURCE_RESPONSE_CHUNK_SIZE: u64 = 4096;
 macro_rules! static_resources_initialize {
     ( $($id:expr, $path:expr), * ) => {
         lazy_static! {
-            pub static ref STATIC_RESOURCES: std::collections::HashMap<&'static str, self::rocket_include_static_resources::StaticResource> = {
+            pub static ref STATIC_RESOURCES: std::collections::HashMap<&'static str, ::rocket_include_static_resources::StaticResource> = {
                 {
-                    use self::crc_any::CRC;
-                    use self::mime_guess::get_mime_type_str;
-                    use self::rocket_include_static_resources::StaticResource;
+                    use ::rocket_include_static_resources::crc_any::CRC;
+                    use ::rocket_include_static_resources::mime_guess::get_mime_type_str;
+                    use ::rocket_include_static_resources::StaticResource;
                     use std::path::Path;
                     use std::collections::HashMap;
 
@@ -112,9 +117,9 @@ macro_rules! static_resources_initialize {
 macro_rules! static_response_builder {
     ( $id:expr ) => {
         {
-            use self::rocket::response::Response;
-            use self::rocket::http::hyper::header::{ETag, EntityTag};
-            use self::rocket_include_static_resources::STATIC_RESOURCE_RESPONSE_CHUNK_SIZE;
+            use ::rocket_include_static_resources::rocket::response::Response;
+            use ::rocket_include_static_resources::rocket::http::hyper::header::{ETag, EntityTag};
+            use ::rocket_include_static_resources::STATIC_RESOURCE_RESPONSE_CHUNK_SIZE;
 
             let resource = STATIC_RESOURCES.get($id).unwrap();
 
@@ -135,9 +140,9 @@ macro_rules! static_response_builder {
     };
     ( $etag_if_none_match:expr, $id:expr ) => {
         {
-            use self::rocket::response::Response;
-            use self::rocket::http::{Status, hyper::header::{ETag, EntityTag}};
-            use self::rocket_include_static_resources::STATIC_RESOURCE_RESPONSE_CHUNK_SIZE;
+            use ::rocket_include_static_resources::rocket::response::Response;
+            use ::rocket_include_static_resources::rocket::http::{Status, hyper::header::{ETag, EntityTag}};
+            use ::rocket_include_static_resources::STATIC_RESOURCE_RESPONSE_CHUNK_SIZE;
 
             let resource = STATIC_RESOURCES.get($id).unwrap();
 

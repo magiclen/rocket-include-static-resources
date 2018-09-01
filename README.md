@@ -15,8 +15,6 @@ This is a crate which provides macros `static_resources_initialize!` and `static
 extern crate rocket_etag_if_none_match;
 
 extern crate rocket;
-extern crate crc_any;
-extern crate mime_guess;
 
 static_resources_initialize!(
    "favicon", "included-static-resources/favicon.ico",
