@@ -61,13 +61,13 @@ pub const STATIC_RESOURCE_RESPONSE_CHUNK_SIZE: u64 = 4096;
 macro_rules! static_resources_initialize {
     ( $($id:expr, $path:expr), * ) => {
         lazy_static! {
-            pub static ref STATIC_RESOURCES: std::collections::HashMap<&'static str, ::rocket_include_static_resources::StaticResource> = {
+            pub static ref STATIC_RESOURCES: ::std::collections::HashMap<&'static str, ::rocket_include_static_resources::StaticResource> = {
                 {
                     use ::rocket_include_static_resources::crc_any::CRC;
                     use ::rocket_include_static_resources::mime_guess::get_mime_type_str;
                     use ::rocket_include_static_resources::StaticResource;
-                    use std::path::Path;
-                    use std::collections::HashMap;
+                    use ::std::path::Path;
+                    use ::std::collections::HashMap;
 
                     let mut map = HashMap::new();
 
