@@ -41,6 +41,8 @@ fn favicon_png() -> Response<'static> {
 
 Refer to `tests/favicon.rs` to see the example completely.
 
+In order to reduce the compilation time, files are compiled into your executable binary file together, only when you are using the **release** profile.
+
 ## License
 
 [MIT](LICENSE)
