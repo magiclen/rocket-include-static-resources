@@ -8,6 +8,7 @@
 //! #![plugin(rocket_codegen)]
 //!
 //! #[macro_use] extern crate lazy_static;
+//! #[macro_use] extern crate lazy_static_include;
 //!
 //! #[macro_use] extern crate rocket_include_static_resources;
 //! extern crate rocket_etag_if_none_match;
@@ -38,6 +39,8 @@
 //! * `static_response!` is used for retrieving the file you input through the macro `static_resources_initialize!` as a Response instance into which three HTTP headers, **Content-Type**, **Content-Length** and **Etag**, will be automatically added.
 //!
 //! Refer to `tests/favicon.rs` to see the example completely.
+//!
+//! In order to reduce the compilation time, files are compiled into your executable binary file together, only when you are using the **release** profile.
 
 pub extern crate rocket;
 pub extern crate rocket_etag_if_none_match;
@@ -60,8 +63,10 @@ pub const STATIC_RESOURCE_RESPONSE_CHUNK_SIZE: u64 = 4096;
 #[macro_export]
 macro_rules! static_resources_initialize {
     ( $($id:expr, $path:expr), * ) => {
+        lazy_static_include_bytes!(STATIC_RESOURCES_DATA $(, $path)* );
+
         lazy_static! {
-            pub static ref STATIC_RESOURCES: ::std::collections::HashMap<&'static str, ::rocket_include_static_resources::StaticResource> = {
+            static ref STATIC_RESOURCES: ::std::collections::HashMap<&'static str, ::rocket_include_static_resources::StaticResource> = {
                 {
                     use ::rocket_include_static_resources::crc_any::CRC;
                     use ::rocket_include_static_resources::mime_guess::get_mime_type_str;
@@ -71,9 +76,13 @@ macro_rules! static_resources_initialize {
 
                     let mut map = HashMap::new();
 
+                    let mut p = 0usize;
+
                     $(
                         {
-                            let data = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/", $path));
+                            let data = STATIC_RESOURCES_DATA[p];
+
+                            p += 1;
 
                             let mut crc64ecma = CRC::crc64ecma();
                             crc64ecma.digest(data.as_ref());

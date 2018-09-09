@@ -5,6 +5,9 @@
 extern crate lazy_static;
 
 #[macro_use]
+extern crate lazy_static_include;
+
+#[macro_use]
 extern crate rocket_include_static_resources;
 extern crate rocket_etag_if_none_match;
 
