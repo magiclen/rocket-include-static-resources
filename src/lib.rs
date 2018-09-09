@@ -63,7 +63,7 @@ pub const STATIC_RESOURCE_RESPONSE_CHUNK_SIZE: u64 = 4096;
 #[macro_export]
 macro_rules! static_resources_initialize {
     ( $($id:expr, $path:expr), * ) => {
-        lazy_static_include_bytes!(STATIC_RESOURCES_DATA $(, $path)* );
+        lazy_static_include_bytes_vec!(STATIC_RESOURCES_DATA $(, $path)* );
 
         lazy_static! {
             static ref STATIC_RESOURCES: ::std::collections::HashMap<&'static str, ::rocket_include_static_resources::StaticResource> = {
