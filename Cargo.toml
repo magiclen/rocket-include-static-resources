@@ -1,22 +1,27 @@
 [package]
 name = "rocket-include-static-resources"
-version = "0.5.1"
+version = "0.6.0"
 authors = ["Magic Len <len@magiclen.org>"]
 repository = "https://github.com/magiclen/rocket-include-static-resources"
 homepage = "https://magiclen.org/rocket-include-static-resources"
-keywords = ["rocket", "server", "web", "static"]
-categories = ["parsing"]
+keywords = ["rocket", "server", "web", "static", "file"]
+categories = ["web-programming"]
 description= "This is a crate which provides macros `static_resources_initialize!` and `static_response!` to statically include files from your Rust project and make them be the HTTP response sources quickly."
 readme = "README.md"
 license = "MIT"
 
+[badges]
+travis-ci = { repository = "magiclen/rocket-include-static-resources", branch = "master" }
+
 [dependencies]
-rocket = "0.3.15"
-lazy_static = "1.1.0"
-lazy-static-include = "1.2"
+rocket = ">=0.3.16"
+mime = "0.3.12"
+mime_guess = " 2.0.0-alpha.6"
 crc-any = "1.0.0"
-mime_guess = "1.8.6"
-rocket-etag-if-none-match = "0.1.0"
+
+rocket-etag-if-none-match = "0.2.1"
 
 [dev-dependencies]
-rocket_codegen = "0.3.15"
+rocket_codegen = ">=0.3.16"
+lazy_static = "1.1.0"
+lazy-static-include = "1.2"
