@@ -15,7 +15,6 @@ This is a crate which provides macros `static_resources_initialize!` and `static
 #[macro_use] extern crate lazy_static_include;
 
 #[macro_use] extern crate rocket_include_static_resources;
-extern crate rocket_etag_if_none_match;
 
 extern crate rocket;
 
@@ -24,7 +23,7 @@ static_resources_initialize!(
    "favicon-png", "included-static-resources/favicon-16.png"
 );
 
-use rocket_etag_if_none_match::EtagIfNoneMatch;
+use rocket_include_static_resources::EtagIfNoneMatch;
 
 use rocket::response::Response;
 
