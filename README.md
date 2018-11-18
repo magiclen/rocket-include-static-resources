@@ -19,8 +19,8 @@ This is a crate which provides macros `static_resources_initialize!` and `static
 extern crate rocket;
 
 static_resources_initialize!(
-   "favicon", "included-static-resources/favicon.ico",
-   "favicon-png", "included-static-resources/favicon-16.png"
+   "favicon", "examples/front-end/images/favicon.ico",
+   "favicon-png", "examples/front-end/images/favicon-16.png"
 );
 
 use rocket_include_static_resources::EtagIfNoneMatch;
