@@ -25,8 +25,6 @@ static_resources_initialize!(
 
 use rocket_include_static_resources::{EtagIfNoneMatch, StaticResponse};
 
-use rocket::response::Response;
-
 #[get("/favicon.ico")]
 fn favicon(etag_if_none_match: EtagIfNoneMatch) -> StaticResponse {
    static_response!(etag_if_none_match, "favicon")
