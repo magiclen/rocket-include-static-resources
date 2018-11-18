@@ -12,9 +12,7 @@ extern crate lazy_static;
 #[macro_use]
 extern crate lazy_static_include;
 
-use rocket_include_static_resources::EtagIfNoneMatch;
-
-use rocket::response::Response;
+use rocket_include_static_resources::{EtagIfNoneMatch, StaticResponse};
 
 static_resources_initialize!(
     "favicon", "examples/front-end/images/favicon.ico",
@@ -24,17 +22,17 @@ static_resources_initialize!(
 );
 
 #[get("/favicon.ico")]
-fn favicon(etag_if_none_match: EtagIfNoneMatch) -> Response<'static> {
+fn favicon(etag_if_none_match: EtagIfNoneMatch) -> StaticResponse {
     static_response!(etag_if_none_match, "favicon")
 }
 
 #[get("/favicon-16.png")]
-fn favicon_png(etag_if_none_match: EtagIfNoneMatch) -> Response<'static> {
+fn favicon_png(etag_if_none_match: EtagIfNoneMatch) -> StaticResponse {
     static_response!(etag_if_none_match, "favicon-png")
 }
 
 #[get("/")]
-fn index(etag_if_none_match: EtagIfNoneMatch) -> Response<'static> {
+fn index(etag_if_none_match: EtagIfNoneMatch) -> StaticResponse {
     static_response!(etag_if_none_match, "html-readme")
 }
 

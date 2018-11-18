@@ -23,17 +23,17 @@ static_resources_initialize!(
    "favicon-png", "examples/front-end/images/favicon-16.png"
 );
 
-use rocket_include_static_resources::EtagIfNoneMatch;
+use rocket_include_static_resources::{EtagIfNoneMatch, StaticResponse};
 
 use rocket::response::Response;
 
 #[get("/favicon.ico")]
-fn favicon(etag_if_none_match: EtagIfNoneMatch) -> Response<'static> {
+fn favicon(etag_if_none_match: EtagIfNoneMatch) -> StaticResponse {
    static_response!(etag_if_none_match, "favicon")
 }
 
 #[get("/favicon.png")]
-fn favicon_png() -> Response<'static> {
+fn favicon_png() -> StaticResponse {
    static_response!("favicon-png")
 }
 ```
