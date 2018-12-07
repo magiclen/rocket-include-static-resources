@@ -8,19 +8,18 @@ This is a crate which provides macros `static_resources_initialize!` and `static
 ## Example
 
 ```rust
-#![feature(plugin)]
-#![plugin(rocket_codegen)]
+#![feature(proc_macro_hygiene, decl_macro)]
 
 #[macro_use] extern crate lazy_static;
 #[macro_use] extern crate lazy_static_include;
 
 #[macro_use] extern crate rocket_include_static_resources;
 
-extern crate rocket;
+#[macro_use] extern crate rocket;
 
 static_resources_initialize!(
-   "favicon", "examples/front-end/images/favicon.ico",
-   "favicon-png", "examples/front-end/images/favicon-16.png"
+   "favicon", "examples/front-end/favicon.ico",
+   "favicon-png", "iexamples/front-end/favicon-16.png"
 );
 
 use rocket_include_static_resources::{EtagIfNoneMatch, StaticResponse};
