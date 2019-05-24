@@ -41,154 +41,138 @@ In order to reduce the compilation time, files are compiled into your executable
 See `examples`.
 */
 
-pub extern crate mime;
-#[doc(hidden)]
-pub extern crate mime_guess;
-#[doc(hidden)]
-pub extern crate rocket;
+mod functions;
+mod file_resources;
+mod static_resources;
+mod manager;
+mod fairing;
+mod macros;
+
+extern crate mime;
+extern crate mime_guess;
+extern crate crc_any;
+
+extern crate rocket;
+
 extern crate rocket_etag_if_none_match;
 
-#[doc(hidden)]
-pub extern crate crc_any;
+use std::io::Cursor;
+#[cfg(debug_assertions)]
+use std::sync::MutexGuard;
 
 use mime::Mime;
 
+use rocket::State;
+use rocket::request::Request;
+use rocket::response::{self, Response, Responder};
+use rocket::http::{Status, hyper::header::ETag};
+use rocket::fairing::Fairing;
+
 pub use rocket_etag_if_none_match::{EntityTag, EtagIfNoneMatch};
 
-/// The response type for `StaticResource`.
-pub type StaticResponse = rocket::response::Response<'static>;
+pub use file_resources::FileResources;
+pub use static_resources::StaticResources;
+pub use manager::StaticContextManager;
+use fairing::StaticResponseFairing;
 
-#[doc(hidden)]
-pub struct StaticResource {
-    pub data: &'static [u8],
-    pub content_type: Mime,
-    pub etag: EntityTag,
+#[derive(Debug)]
+/// To respond a static resource.
+pub struct StaticResponse {
+    client_etag: EtagIfNoneMatch,
+    etag: Option<EntityTag>,
+    name: &'static str,
 }
 
-/// Used for including files into your executable binary file. You need to specify each file's ID and its path.
-#[macro_export]
-macro_rules! static_resources_initialize {
-    ( $($id:expr, $path:expr), * $(,)* ) => {
-        lazy_static_include_bytes_vec!(STATIC_RESOURCES_DATA $(, $path)* );
+impl StaticResponse {
+    #[inline]
+    /// Build a `StaticResponse` instance.
+    pub fn build(client_etag: EtagIfNoneMatch, etag: Option<EntityTag>, name: &'static str) -> StaticResponse {
+        StaticResponse {
+            client_etag,
+            etag,
+            name,
+        }
+    }
+}
 
-        lazy_static! {
-            static ref STATIC_RESOURCES: ::std::collections::HashMap<&'static str, ::rocket_include_static_resources::StaticResource> = {
-                {
-                    use ::rocket_include_static_resources::crc_any::CRC;
-                    use ::rocket_include_static_resources::mime_guess::get_mime_type;
-                    use ::rocket_include_static_resources::mime::APPLICATION_OCTET_STREAM;
-                    use ::rocket_include_static_resources::StaticResource;
-                    use ::rocket_include_static_resources::EntityTag;
-                    use ::std::path::Path;
-                    use ::std::collections::HashMap;
+impl StaticResponse {
+    #[cfg(debug_assertions)]
+    #[inline]
+    /// Create the fairing of `HandlebarsResponse`.
+    pub fn fairing<F>(f: F) -> impl Fairing where F: Fn(&mut MutexGuard<FileResources>) + Send + Sync + 'static {
+        StaticResponseFairing {
+            custom_callback: Box::new(f)
+        }
+    }
 
-                    let mut map = HashMap::new();
+    #[cfg(not(debug_assertions))]
+    #[inline]
+    /// Create the fairing of `HandlebarsResponse`.
+    pub fn fairing<F>(f: F) -> impl Fairing where F: Fn(&mut StaticResources) + Send + Sync + 'static {
+        StaticResponseFairing {
+            custom_callback: Box::new(f)
+        }
+    }
+}
 
-                    let mut p = 0usize;
+impl<'a> Responder<'a> for StaticResponse {
+    #[cfg(debug_assertions)]
+    fn respond_to(mut self, request: &Request) -> response::Result<'a> {
+        let mut response = Response::build();
 
-                    $(
-                        {
-                            let data = STATIC_RESOURCES_DATA[p];
+        let cm = request.guard::<State<StaticContextManager>>().expect("StaticContextManager registered in on_attach");
 
-                            p += 1;
+        let (mime, data, etag) = {
+            let resources = cm.resources.lock().unwrap();
 
-                            let mut crc64ecma = CRC::crc64ecma();
-                            crc64ecma.digest(data.as_ref());
+            match resources.get_resource(self.name) {
+                Some((mime, data, etag)) => {
+                    let etag = self.etag.take().unwrap_or(etag.clone());
 
-                            let crc64 = crc64ecma.get_crc();
-
-                            let etag = EntityTag::new(true, format!("{:X}", crc64));
-
-                            let path = Path::new($path);
-
-                            let content_type = match path.extension() {
-                                Some(extension) => get_mime_type(extension.to_str().unwrap()),
-                                None => APPLICATION_OCTET_STREAM
-                            };
-
-                            if map.contains_key($id) {
-                                panic!("The static resource ID `{}` is duplicated.", $id);
-                            }
-
-                            map.insert($id , StaticResource{
-                                data,
-                                content_type,
-                                etag,
-                            });
-                        }
-                    )*
-
-                    map
+                    (mime.to_string(), data.to_vec(), etag)
                 }
-            };
-        }
-    };
-}
+                None => {
+                    response.status(Status::InternalServerError);
 
-/// Used for retrieving the file you input through the macro `static_resources_initialize!` as a ResponseBuilder instance into which three HTTP headers, **Content-Type**, **Content-Length** and **Etag**, will be automatically added. After fetching the ResponseBuilder instance, you can add extra headers into it!
-#[macro_export]
-macro_rules! static_response_builder {
-    ( $id:expr ) => {
-        {
-            use ::rocket_include_static_resources::rocket::response::Response;
-            use ::rocket_include_static_resources::rocket::http::hyper::header::ETag;
-            use ::rocket_include_static_resources::EntityTag;
-
-            let resource = STATIC_RESOURCES.get($id).unwrap();
-
-            let mut response_builder = Response::build();
-
-            response_builder.header(ETag(resource.etag.clone()));
-
-            response_builder.raw_header("Content-Type", resource.content_type.to_string());
-
-            response_builder.raw_header("Content-Length", resource.data.len().to_string());
-
-            response_builder.streamed_body(resource.data);
-
-            response_builder
-        }
-    };
-    ( $etag_if_none_match:expr, $id:expr ) => {
-        {
-            use ::rocket_include_static_resources::rocket::response::Response;
-            use ::rocket_include_static_resources::rocket::http::{Status, hyper::header::ETag};
-            use ::rocket_include_static_resources::EntityTag;
-
-            let resource = STATIC_RESOURCES.get($id).unwrap();
-
-            let mut response_builder = Response::build();
-
-            let is_etag_match = $etag_if_none_match.weak_eq(&resource.etag);
-
-            if is_etag_match {
-                response_builder.status(Status::NotModified);
-            } else {
-                response_builder.header(ETag(resource.etag.clone()));
-
-                response_builder.raw_header("Content-Type", resource.content_type.to_string());
-
-                response_builder.raw_header("Content-Length", resource.data.len().to_string());
-
-                response_builder.streamed_body(resource.data);
+                    return response.ok();
+                }
             }
+        };
 
-            response_builder
-        }
-    };
-}
+        response.header(ETag(etag))
+            .raw_header("Content-Type", mime)
+            .sized_body(Cursor::new(data));
 
-/// Used for retrieving the file you input through the macro `static_resources_initialize!` as a Response instance into which three HTTP headers, **Content-Type**, **Content-Length** and **Etag**, will be automatically added.
-#[macro_export]
-macro_rules! static_response {
-    ( $id:expr ) => {
-        {
-            static_response_builder!($id).finalize()
-        }
-    };
-    ( $etag_if_none_match:expr, $id:expr ) => {
-        {
-            static_response_builder!($etag_if_none_match, $id).finalize()
-        }
-    };
+        response.ok()
+    }
+
+    #[cfg(not(debug_assertions))]
+    fn respond_to(mut self, request: &Request) -> response::Result<'a> {
+        let mut response = Response::build();
+
+        let cm = request.guard::<State<StaticContextManager>>().expect("StaticContextManager registered in on_attach");
+
+        let (mime, data, etag) = {
+            let resources: &StaticResources = &cm.resources;
+
+            match resources.get_resource(self.name) {
+                Some((mime, data, etag)) => {
+                    let etag = self.etag.take().unwrap_or(etag.clone());
+
+                    (mime.to_string(), data, etag)
+                }
+                None => {
+                    response.status(Status::InternalServerError);
+
+                    return response.ok();
+                }
+            }
+        };
+
+        response.header(ETag(etag))
+            .raw_header("Content-Type", mime)
+            .sized_body(Cursor::new(data));
+
+        response.ok()
+    }
 }
