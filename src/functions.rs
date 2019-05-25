@@ -6,9 +6,9 @@ use crate::mime_guess::get_mime_type;
 use crate::{Mime, EntityTag};
 
 #[inline]
-pub(crate) fn compute_data_etag(data: &[u8]) -> EntityTag {
+pub(crate) fn compute_data_etag<B: AsRef<[u8]> + ?Sized>(data: &B) -> EntityTag {
     let mut crc64ecma = CRC::crc64ecma();
-    crc64ecma.digest(data);
+    crc64ecma.digest(data.as_ref());
     let crc64 = crc64ecma.get_crc();
     EntityTag::new(true, format!("{:X}", crc64))
 }
