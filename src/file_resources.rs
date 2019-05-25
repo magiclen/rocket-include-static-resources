@@ -33,7 +33,7 @@ impl FileResources {
 
         let mime = guess_mime(&file_path);
 
-        let metadata = file_path.metadata().unwrap();
+        let metadata = file_path.metadata()?;
 
         let mtime = metadata.modified().ok();
 
