@@ -5,38 +5,52 @@ This is a crate which provides macros `static_resources_initialize!` and `static
 
 ## Example
 
-```rust
+```rust,ignore
 #![feature(proc_macro_hygiene, decl_macro)]
 
-#[macro_use] extern crate lazy_static;
-#[macro_use] extern crate lazy_static_include;
+#[macro_use]
+extern crate rocket;
 
-#[macro_use] extern crate rocket_include_static_resources;
-
-#[macro_use] extern crate rocket;
-
-static_resources_initialize!(
-   "favicon", "examples/front-end/favicon.ico",
-   "favicon-png", "iexamples/front-end/favicon-16.png"
-);
+#[macro_use]
+extern crate rocket_include_static_resources;
 
 use rocket_include_static_resources::{EtagIfNoneMatch, StaticResponse};
 
 #[get("/favicon.ico")]
 fn favicon(etag_if_none_match: EtagIfNoneMatch) -> StaticResponse {
-   static_response!(etag_if_none_match, "favicon")
+    static_response!(etag_if_none_match, "favicon")
 }
 
-#[get("/favicon.png")]
+#[get("/favicon-16.png")]
 fn favicon_png() -> StaticResponse {
-   static_response!("favicon-png")
+    static_response!("favicon-png")
+}
+
+#[get("/")]
+fn index(etag_if_none_match: EtagIfNoneMatch) -> StaticResponse {
+    static_response!(etag_if_none_match, "html-readme")
+}
+
+fn main() {
+    rocket::ignite()
+        .attach(StaticResponse::fairing(|resources| {
+            static_resources_initialize!(
+                resources,
+
+                "favicon", "examples/front-end/images/favicon.ico",
+                "favicon-png", "examples/front-end/images/favicon-16.png",
+
+                "html-readme", "examples/front-end/html/README.html",
+            );
+        }))
+        .mount("/", routes![favicon, favicon_png])
+        .mount("/", routes![index])
+        .launch();
 }
 ```
 
-* `static_resources_initialize!` is used for including files into your executable binary file. You need to specify each file's ID and its path. For instance, the above example uses **favicon** to represent the file **included-static-resources/favicon.ico** and **favicon_png** to represent the file **included-static-resources/favicon.png**. An ID cannot be repeating.
+* `static_resources_initialize!` is used for including files into your executable binary file. You need to specify each file's name and its path. For instance, the above example uses **favicon** to represent the file **included-static-resources/favicon.ico** and **favicon_png** to represent the file **included-static-resources/favicon.png**. A name cannot be repeating. In order to reduce the compilation time and allow to hot-reload resources, files are compiled into your executable binary file together, only when you are using the **release** profile.
 * `static_response!` is used for retrieving the file you input through the macro `static_resources_initialize!` as a Response instance into which three HTTP headers, **Content-Type**, **Content-Length** and **Etag**, will be automatically added.
-
-In order to reduce the compilation time, files are compiled into your executable binary file together, only when you are using the **release** profile.
 
 See `examples`.
 */
@@ -65,7 +79,7 @@ use mime::Mime;
 use rocket::State;
 use rocket::request::Request;
 use rocket::response::{self, Response, Responder};
-use rocket::http::{Status, hyper::header::ETag};
+use rocket::http::Status;
 use rocket::fairing::Fairing;
 
 pub use rocket_etag_if_none_match::{EntityTag, EtagIfNoneMatch};
@@ -117,7 +131,7 @@ impl StaticResponse {
 
 impl<'a> Responder<'a> for StaticResponse {
     #[cfg(debug_assertions)]
-    fn respond_to(mut self, request: &Request) -> response::Result<'a> {
+    fn respond_to(self, request: &Request) -> response::Result<'a> {
         let mut response = Response::build();
 
         let cm = request.guard::<State<StaticContextManager>>().expect("StaticContextManager registered in on_attach");
@@ -127,9 +141,17 @@ impl<'a> Responder<'a> for StaticResponse {
 
             match resources.get_resource(self.name) {
                 Some((mime, data, etag)) => {
-                    let etag = self.etag.take().unwrap_or(etag.clone());
+                    let is_etag_match = self.client_etag.weak_eq(&etag);
 
-                    (mime.to_string(), data.to_vec(), etag)
+                    if is_etag_match {
+                        response.status(Status::NotModified);
+
+                        return response.ok();
+                    } else {
+                        let etag = self.etag.map(|etag| etag.to_string()).unwrap_or(etag.to_string());
+
+                        (mime.to_string(), data.to_vec(), etag)
+                    }
                 }
                 None => {
                     response.status(Status::InternalServerError);
@@ -139,7 +161,8 @@ impl<'a> Responder<'a> for StaticResponse {
             }
         };
 
-        response.header(ETag(etag))
+        response
+            .raw_header("ETag", etag)
             .raw_header("Content-Type", mime)
             .sized_body(Cursor::new(data));
 
@@ -147,7 +170,7 @@ impl<'a> Responder<'a> for StaticResponse {
     }
 
     #[cfg(not(debug_assertions))]
-    fn respond_to(mut self, request: &Request) -> response::Result<'a> {
+    fn respond_to(self, request: &Request) -> response::Result<'a> {
         let mut response = Response::build();
 
         let cm = request.guard::<State<StaticContextManager>>().expect("StaticContextManager registered in on_attach");
@@ -157,9 +180,17 @@ impl<'a> Responder<'a> for StaticResponse {
 
             match resources.get_resource(self.name) {
                 Some((mime, data, etag)) => {
-                    let etag = self.etag.take().unwrap_or(etag.clone());
+                    let is_etag_match = self.client_etag.weak_eq(&etag);
 
-                    (mime.to_string(), data, etag)
+                    if is_etag_match {
+                        response.status(Status::NotModified);
+
+                        return response.ok();
+                    } else {
+                        let etag = self.etag.map(|etag| etag.to_string()).unwrap_or(etag.to_string());
+
+                        (mime.to_string(), data, etag)
+                    }
                 }
                 None => {
                     response.status(Status::InternalServerError);
@@ -169,7 +200,8 @@ impl<'a> Responder<'a> for StaticResponse {
             }
         };
 
-        response.header(ETag(etag))
+        response
+            .raw_header("ETag", etag)
             .raw_header("Content-Type", mime)
             .sized_body(Cursor::new(data));
 
