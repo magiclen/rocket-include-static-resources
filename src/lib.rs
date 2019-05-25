@@ -137,10 +137,10 @@ impl<'a> Responder<'a> for StaticResponse {
         let cm = request.guard::<State<StaticContextManager>>().expect("StaticContextManager registered in on_attach");
 
         let (mime, data, etag) = {
-            let resources = cm.resources.lock().unwrap();
+            let mut resources = cm.resources.lock().unwrap();
 
-            match resources.get_resource(self.name) {
-                Some((mime, data, etag)) => {
+            match resources.get_resource(self.name, true) {
+                Ok((mime, data, etag)) => {
                     let is_etag_match = self.client_etag.weak_eq(&etag);
 
                     if is_etag_match {
@@ -153,7 +153,7 @@ impl<'a> Responder<'a> for StaticResponse {
                         (mime.to_string(), data.to_vec(), etag)
                     }
                 }
-                None => {
+                Err(_) => {
                     response.status(Status::InternalServerError);
 
                     return response.ok();

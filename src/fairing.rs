@@ -2,13 +2,7 @@
 use std::sync::{Mutex, MutexGuard};
 
 use crate::rocket::Rocket;
-#[cfg(debug_assertions)]
-use crate::rocket::State;
-#[cfg(debug_assertions)]
-use crate::rocket::request::Request;
 use crate::rocket::fairing::{Fairing, Info, Kind};
-#[cfg(debug_assertions)]
-use crate::rocket::data::Data;
 
 #[cfg(debug_assertions)]
 use crate::FileResources;
@@ -33,15 +27,6 @@ pub struct StaticResponseFairing {
 }
 
 impl Fairing for StaticResponseFairing {
-    #[cfg(debug_assertions)]
-    fn info(&self) -> Info {
-        Info {
-            name: FAIRING_NAME,
-            kind: Kind::Attach | Kind::Request,
-        }
-    }
-
-    #[cfg(not(debug_assertions))]
     fn info(&self) -> Info {
         Info {
             name: FAIRING_NAME,
@@ -69,12 +54,5 @@ impl Fairing for StaticResponseFairing {
         let state = StaticContextManager::new(resources);
 
         Ok(rocket.manage(state))
-    }
-
-    #[cfg(debug_assertions)]
-    fn on_request(&self, req: &mut Request, _data: &Data) {
-        let cm = req.guard::<State<StaticContextManager>>().expect("StaticContextManager registered in on_attach");
-
-        cm.resources.lock().unwrap().reload_if_needed().unwrap();
     }
 }

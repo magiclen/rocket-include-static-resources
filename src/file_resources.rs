@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::SystemTime;
 use std::fs;
-use std::io;
+use std::io::{self, ErrorKind};
 
 use crate::{Mime, EntityTag};
 use crate::functions::{compute_data_etag, guess_mime};
@@ -104,9 +104,52 @@ impl FileResources {
 
     #[inline]
     /// Get the specific resource.
-    pub fn get_resource<S: AsRef<str>>(&self, name: S) -> Option<(&Mime, &[u8], &EntityTag)> {
+    pub fn get_resource<S: AsRef<str>>(&mut self, name: S, reload_if_needed: bool) -> Result<(&Mime, &[u8], &EntityTag), io::Error> {
         let name = name.as_ref();
 
-        self.resources.get(name).map(|(_, mime, data, etag, _)| (mime, data.as_slice(), etag))
+        if reload_if_needed {
+            let (file_path, mime, data, etag, mtime) = self.resources.get_mut(name).ok_or(io::Error::new(ErrorKind::NotFound, format!("The name `{}` is not found.", name)))?;
+
+            let metadata = file_path.metadata()?;
+
+            let (reload, new_mtime) = match mtime {
+                Some(mtime) => {
+                    match metadata.modified() {
+                        Ok(new_mtime) => {
+                            (new_mtime > *mtime, Some(new_mtime))
+                        }
+                        Err(_) => {
+                            (true, None)
+                        }
+                    }
+                }
+                None => {
+                    match metadata.modified() {
+                        Ok(new_mtime) => {
+                            (true, Some(new_mtime))
+                        }
+                        Err(_) => {
+                            (true, None)
+                        }
+                    }
+                }
+            };
+
+            if reload {
+                let new_data = fs::read(&file_path)?;
+
+                let new_etag = compute_data_etag(&new_data);
+
+                *data = new_data;
+
+                *etag = new_etag;
+
+                *mtime = new_mtime;
+            }
+
+            Ok((mime, data, etag))
+        } else {
+            self.resources.get(name).map(|(_, mime, data, etag, _)| (mime, data.as_slice(), etag)).ok_or(io::Error::new(ErrorKind::NotFound, format!("The name `{}` is not found.", name)))
+        }
     }
 }
