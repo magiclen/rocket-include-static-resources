@@ -1,4 +1,4 @@
-/// Used in the fairing of `StaticResponse` to include static files into your executable binary file. You need to specify each file's name and its path.
+/// Used in the fairing of `StaticResponse` to include static files into your executable binary file. You need to specify each file's name and its path. In order to reduce the compilation time and allow to hot-reload resources, files are compiled into your executable binary file together, only when you are using the **release** profile.
 #[macro_export]
 #[cfg(debug_assertions)]
 macro_rules! static_resources_initialize {
@@ -11,7 +11,7 @@ macro_rules! static_resources_initialize {
     };
 }
 
-/// Used in the fairing of `StaticResponse` to include static files into your executable binary file. You need to specify each file's name and its path.
+/// Used in the fairing of `StaticResponse` to include static files into your executable binary file. You need to specify each file's name and its path. In order to reduce the compilation time and allow to hot-reload resources, files are compiled into your executable binary file together, only when you are using the **release** profile.
 #[macro_export]
 #[cfg(not(debug_assertions))]
 macro_rules! static_resources_initialize {
