@@ -58,7 +58,7 @@ impl FileResources {
     }
 
     #[inline]
-    /// Reload templates if needed.
+    /// Reload resources if needed.
     pub fn reload_if_needed(&mut self) -> Result<(), io::Error> {
         for (_, (file_path, _, data, etag, mtime)) in &mut self.resources {
             let metadata = file_path.metadata()?;
