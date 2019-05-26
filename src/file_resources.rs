@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use std::time::SystemTime;
 use std::fs;
 use std::io::{self, ErrorKind};
+use std::sync::Arc;
 
 use crate::{Mime, EntityTag};
 use crate::functions::{compute_data_etag, guess_mime};
@@ -10,7 +11,7 @@ use crate::functions::{compute_data_etag, guess_mime};
 #[derive(Debug)]
 /// Reloadable file resources.
 pub struct FileResources {
-    resources: HashMap<&'static str, (PathBuf, Mime, Vec<u8>, EntityTag, Option<SystemTime>)>
+    resources: HashMap<&'static str, (PathBuf, Mime, Arc<Vec<u8>>, EntityTag, Option<SystemTime>)>
 }
 
 impl FileResources {
@@ -37,7 +38,7 @@ impl FileResources {
 
         let mtime = metadata.modified().ok();
 
-        self.resources.insert(name, (file_path, mime, data, etag, mtime));
+        self.resources.insert(name, (file_path, mime, Arc::new(data), etag, mtime));
 
         Ok(())
     }
@@ -91,7 +92,7 @@ impl FileResources {
 
                 let new_etag = compute_data_etag(&new_data);
 
-                *data = new_data;
+                *data = Arc::new(new_data);
 
                 *etag = new_etag;
 
@@ -104,7 +105,7 @@ impl FileResources {
 
     #[inline]
     /// Get the specific resource.
-    pub fn get_resource<S: AsRef<str>>(&mut self, name: S, reload_if_needed: bool) -> Result<(&Mime, &[u8], &EntityTag), io::Error> {
+    pub fn get_resource<S: AsRef<str>>(&mut self, name: S, reload_if_needed: bool) -> Result<(&Mime, Arc<Vec<u8>>, &EntityTag), io::Error> {
         let name = name.as_ref();
 
         if reload_if_needed {
@@ -140,16 +141,16 @@ impl FileResources {
 
                 let new_etag = compute_data_etag(&new_data);
 
-                *data = new_data;
+                *data = Arc::new(new_data);
 
                 *etag = new_etag;
 
                 *mtime = new_mtime;
             }
 
-            Ok((mime, data, etag))
+            Ok((mime, data.clone(), etag))
         } else {
-            self.resources.get(name).map(|(_, mime, data, etag, _)| (mime, data.as_slice(), etag)).ok_or(io::Error::new(ErrorKind::NotFound, format!("The name `{}` is not found.", name)))
+            self.resources.get(name).map(|(_, mime, data, etag, _)| (mime, data.clone(), etag)).ok_or(io::Error::new(ErrorKind::NotFound, format!("The name `{}` is not found.", name)))
         }
     }
 }

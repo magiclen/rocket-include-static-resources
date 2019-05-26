@@ -65,16 +65,20 @@ mod macros;
 extern crate mime;
 extern crate mime_guess;
 extern crate crc_any;
+extern crate rc_u8_reader;
 
 extern crate rocket;
 
 extern crate rocket_etag_if_none_match;
 
+#[cfg(not(debug_assertions))]
 use std::io::Cursor;
 #[cfg(debug_assertions)]
 use std::sync::MutexGuard;
 
 use mime::Mime;
+#[cfg(debug_assertions)]
+use rc_u8_reader::ArcU8Reader;
 
 use rocket::State;
 use rocket::request::Request;
@@ -150,7 +154,7 @@ impl<'a> Responder<'a> for StaticResponse {
                     } else {
                         let etag = self.etag.map(|etag| etag.to_string()).unwrap_or(etag.to_string());
 
-                        (mime.to_string(), data.to_vec(), etag)
+                        (mime.to_string(), data.clone(), etag)
                     }
                 }
                 Err(_) => {
@@ -164,7 +168,7 @@ impl<'a> Responder<'a> for StaticResponse {
         response
             .raw_header("ETag", etag)
             .raw_header("Content-Type", mime)
-            .sized_body(Cursor::new(data));
+            .sized_body(ArcU8Reader::new(data));
 
         response.ok()
     }
