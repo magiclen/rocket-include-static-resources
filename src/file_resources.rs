@@ -28,15 +28,15 @@ impl FileResources {
     pub fn register_resource_file<P: Into<PathBuf>>(&mut self, name: &'static str, file_path: P) -> Result<(), io::Error> {
         let file_path = file_path.into();
 
+        let metadata = file_path.metadata()?;
+
+        let mtime = metadata.modified().ok();
+
         let data = fs::read(&file_path)?;
 
         let etag = compute_data_etag(&data);
 
         let mime = guess_mime(&file_path);
-
-        let metadata = file_path.metadata()?;
-
-        let mtime = metadata.modified().ok();
 
         self.resources.insert(name, (file_path, mime, Arc::new(data), etag, mtime));
 
