@@ -29,26 +29,9 @@ macro_rules! static_resources_initialize {
 macro_rules! static_response {
     ( $name:expr ) => {
         {
-            use ::rocket_include_static_resources::{StaticResponse, EtagIfNoneMatch};
+            use ::rocket_include_static_resources::StaticResponse;
 
-            StaticResponse::build(
-                EtagIfNoneMatch {
-                    etag: None
-                },
-                None,
-                $name,
-            )
-        }
-    };
-    ( $etag_if_none_match:expr, $name:expr ) => {
-        {
-            use ::rocket_include_static_resources::{StaticResponse, EtagIfNoneMatch};
-
-            StaticResponse::build(
-                $etag_if_none_match,
-                None,
-                $name,
-            )
+            StaticResponse::build($name)
         }
     };
 }

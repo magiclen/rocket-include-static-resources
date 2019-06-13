@@ -14,11 +14,11 @@ extern crate rocket;
 #[macro_use]
 extern crate rocket_include_static_resources;
 
-use rocket_include_static_resources::{EtagIfNoneMatch, StaticResponse};
+use rocket_include_static_resources::StaticResponse;
 
 #[get("/favicon.ico")]
-fn favicon(etag_if_none_match: EtagIfNoneMatch) -> StaticResponse {
-    static_response!(etag_if_none_match, "favicon")
+fn favicon() -> StaticResponse {
+    static_response!("favicon")
 }
 
 #[get("/favicon-16.png")]
@@ -27,8 +27,8 @@ fn favicon_png() -> StaticResponse {
 }
 
 #[get("/")]
-fn index(etag_if_none_match: EtagIfNoneMatch) -> StaticResponse {
-    static_response!(etag_if_none_match, "html-readme")
+fn index() -> StaticResponse {
+    static_response!("html-readme")
 }
 
 fn main() {
@@ -86,7 +86,7 @@ use rocket::response::{self, Response, Responder};
 use rocket::http::Status;
 use rocket::fairing::Fairing;
 
-pub use rocket_etag_if_none_match::{EntityTag, EtagIfNoneMatch};
+use rocket_etag_if_none_match::{EntityTag, EtagIfNoneMatch};
 
 pub use file_resources::FileResources;
 pub use static_resources::StaticResources;
@@ -96,18 +96,14 @@ use fairing::StaticResponseFairing;
 #[derive(Debug)]
 /// To respond a static resource.
 pub struct StaticResponse {
-    client_etag: EtagIfNoneMatch,
-    etag: Option<EntityTag>,
     name: &'static str,
 }
 
 impl StaticResponse {
     #[inline]
     /// Build a `StaticResponse` instance.
-    pub fn build(client_etag: EtagIfNoneMatch, etag: Option<EntityTag>, name: &'static str) -> StaticResponse {
+    pub fn build(name: &'static str) -> StaticResponse {
         StaticResponse {
-            client_etag,
-            etag,
             name,
         }
     }
@@ -136,6 +132,8 @@ impl StaticResponse {
 impl<'a> Responder<'a> for StaticResponse {
     #[cfg(debug_assertions)]
     fn respond_to(self, request: &Request) -> response::Result<'a> {
+        let client_etag = request.guard::<EtagIfNoneMatch>().unwrap();
+
         let mut response = Response::build();
 
         let cm = request.guard::<State<StaticContextManager>>().expect("StaticContextManager registered in on_attach");
@@ -145,16 +143,14 @@ impl<'a> Responder<'a> for StaticResponse {
 
             match resources.get_resource(self.name, true) {
                 Ok((mime, data, etag)) => {
-                    let is_etag_match = self.client_etag.weak_eq(&etag);
+                    let is_etag_match = client_etag.weak_eq(&etag);
 
                     if is_etag_match {
                         response.status(Status::NotModified);
 
                         return response.ok();
                     } else {
-                        let etag = self.etag.map(|etag| etag.to_string()).unwrap_or(etag.to_string());
-
-                        (mime.to_string(), data.clone(), etag)
+                        (mime.to_string(), data.clone(), etag.to_string())
                     }
                 }
                 Err(_) => {
@@ -173,6 +169,8 @@ impl<'a> Responder<'a> for StaticResponse {
 
     #[cfg(not(debug_assertions))]
     fn respond_to(self, request: &Request) -> response::Result<'a> {
+        let client_etag = request.guard::<EtagIfNoneMatch>().unwrap();
+
         let mut response = Response::build();
 
         let cm = request.guard::<State<StaticContextManager>>().expect("StaticContextManager registered in on_attach");
@@ -182,16 +180,14 @@ impl<'a> Responder<'a> for StaticResponse {
 
             match resources.get_resource(self.name) {
                 Some((mime, data, etag)) => {
-                    let is_etag_match = self.client_etag.weak_eq(&etag);
+                    let is_etag_match = client_etag.weak_eq(&etag);
 
                     if is_etag_match {
                         response.status(Status::NotModified);
 
                         return response.ok();
                     } else {
-                        let etag = self.etag.map(|etag| etag.to_string()).unwrap_or(etag.to_string());
-
-                        (mime.to_string(), data, etag)
+                        (mime.to_string(), data, etag.to_string())
                     }
                 }
                 None => {

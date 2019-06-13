@@ -17,13 +17,13 @@ const FAIRING_NAME: &'static str = "Static Resources";
 /// The fairing of `StaticResponse`.
 #[cfg(debug_assertions)]
 pub struct StaticResponseFairing {
-    pub(crate) custom_callback: Box<Fn(&mut MutexGuard<FileResources>) + Send + Sync + 'static>
+    pub(crate) custom_callback: Box<dyn Fn(&mut MutexGuard<FileResources>) + Send + Sync + 'static>
 }
 
 /// The fairing of `StaticResponse`.
 #[cfg(not(debug_assertions))]
 pub struct StaticResponseFairing {
-    pub(crate) custom_callback: Box<Fn(&mut StaticResources) + Send + Sync + 'static>
+    pub(crate) custom_callback: Box<dyn Fn(&mut StaticResources) + Send + Sync + 'static>
 }
 
 impl Fairing for StaticResponseFairing {

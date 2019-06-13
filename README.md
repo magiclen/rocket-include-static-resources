@@ -16,11 +16,11 @@ extern crate rocket;
 #[macro_use]
 extern crate rocket_include_static_resources;
 
-use rocket_include_static_resources::{EtagIfNoneMatch, StaticResponse};
+use rocket_include_static_resources::StaticResponse;
 
 #[get("/favicon.ico")]
-fn favicon(etag_if_none_match: EtagIfNoneMatch) -> StaticResponse {
-    static_response!(etag_if_none_match, "favicon")
+fn favicon() -> StaticResponse {
+    static_response!("favicon")
 }
 
 #[get("/favicon-16.png")]
@@ -29,8 +29,8 @@ fn favicon_png() -> StaticResponse {
 }
 
 #[get("/")]
-fn index(etag_if_none_match: EtagIfNoneMatch) -> StaticResponse {
-    static_response!(etag_if_none_match, "html-readme")
+fn index() -> StaticResponse {
+    static_response!("html-readme")
 }
 
 fn main() {
