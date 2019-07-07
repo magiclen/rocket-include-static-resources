@@ -1,13 +1,13 @@
 use std::path::Path;
 
-use crate::crc_any::CRC;
+use crate::crc_any::CRCu64;
 use crate::mime::APPLICATION_OCTET_STREAM;
 use crate::mime_guess::get_mime_type;
 use crate::{Mime, EntityTag};
 
 #[inline]
 pub(crate) fn compute_data_etag<B: AsRef<[u8]> + ?Sized>(data: &B) -> EntityTag {
-    let mut crc64ecma = CRC::crc64ecma();
+    let mut crc64ecma = CRCu64::crc64();
     crc64ecma.digest(data.as_ref());
     let crc64 = crc64ecma.get_crc();
     EntityTag::new(true, format!("{:X}", crc64))
