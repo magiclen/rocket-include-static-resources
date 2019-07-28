@@ -10,8 +10,9 @@ description= "This is a crate which provides macros `static_resources_initialize
 readme = "README.md"
 license = "MIT"
 
-[badges]
-travis-ci = { repository = "magiclen/rocket-include-static-resources", branch = "master" }
+[badges.travis-ci]
+repository = "magiclen/rocket-include-static-resources"
+branch = "master"
 
 [dependencies]
 rocket = "0.4.2"
