@@ -1,8 +1,8 @@
 #[cfg(debug_assertions)]
 use std::sync::{Mutex, MutexGuard};
 
-use crate::rocket::Rocket;
 use crate::rocket::fairing::{Fairing, Info, Kind};
+use crate::rocket::Rocket;
 
 #[cfg(debug_assertions)]
 use crate::FileResources;
@@ -12,18 +12,18 @@ use crate::StaticResources;
 
 use crate::StaticContextManager;
 
-const FAIRING_NAME: &'static str = "Static Resources";
+const FAIRING_NAME: &str = "Static Resources";
 
 /// The fairing of `StaticResponse`.
 #[cfg(debug_assertions)]
 pub struct StaticResponseFairing {
-    pub(crate) custom_callback: Box<dyn Fn(&mut MutexGuard<FileResources>) + Send + Sync + 'static>
+    pub(crate) custom_callback: Box<dyn Fn(&mut MutexGuard<FileResources>) + Send + Sync + 'static>,
 }
 
 /// The fairing of `StaticResponse`.
 #[cfg(not(debug_assertions))]
 pub struct StaticResponseFairing {
-    pub(crate) custom_callback: Box<dyn Fn(&mut StaticResources) + Send + Sync + 'static>
+    pub(crate) custom_callback: Box<dyn Fn(&mut StaticResources) + Send + Sync + 'static>,
 }
 
 impl Fairing for StaticResponseFairing {

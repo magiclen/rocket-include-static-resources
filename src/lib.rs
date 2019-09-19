@@ -55,16 +55,16 @@ fn main() {
 See `examples`.
 */
 
-mod functions;
-mod file_resources;
-mod static_resources;
-mod manager;
 mod fairing;
+mod file_resources;
+mod functions;
 mod macros;
+mod manager;
+mod static_resources;
 
+extern crate crc_any;
 extern crate mime;
 extern crate mime_guess;
-extern crate crc_any;
 extern crate rc_u8_reader;
 
 extern crate rocket;
@@ -80,18 +80,18 @@ use mime::Mime;
 #[cfg(debug_assertions)]
 use rc_u8_reader::ArcU8Reader;
 
-use rocket::State;
-use rocket::request::Request;
-use rocket::response::{self, Response, Responder};
-use rocket::http::Status;
 use rocket::fairing::Fairing;
+use rocket::http::Status;
+use rocket::request::Request;
+use rocket::response::{self, Responder, Response};
+use rocket::State;
 
 use rocket_etag_if_none_match::{EntityTag, EtagIfNoneMatch};
 
-pub use file_resources::FileResources;
-pub use static_resources::StaticResources;
-pub use manager::StaticContextManager;
 use fairing::StaticResponseFairing;
+pub use file_resources::FileResources;
+pub use manager::StaticContextManager;
+pub use static_resources::StaticResources;
 
 #[derive(Debug)]
 /// To respond a static resource.
@@ -113,18 +113,22 @@ impl StaticResponse {
     #[cfg(debug_assertions)]
     #[inline]
     /// Create the fairing of `HandlebarsResponse`.
-    pub fn fairing<F>(f: F) -> impl Fairing where F: Fn(&mut MutexGuard<FileResources>) + Send + Sync + 'static {
+    pub fn fairing<F>(f: F) -> impl Fairing
+    where
+        F: Fn(&mut MutexGuard<FileResources>) + Send + Sync + 'static, {
         StaticResponseFairing {
-            custom_callback: Box::new(f)
+            custom_callback: Box::new(f),
         }
     }
 
     #[cfg(not(debug_assertions))]
     #[inline]
     /// Create the fairing of `HandlebarsResponse`.
-    pub fn fairing<F>(f: F) -> impl Fairing where F: Fn(&mut StaticResources) + Send + Sync + 'static {
+    pub fn fairing<F>(f: F) -> impl Fairing
+    where
+        F: Fn(&mut StaticResources) + Send + Sync + 'static, {
         StaticResponseFairing {
-            custom_callback: Box::new(f)
+            custom_callback: Box::new(f),
         }
     }
 }
@@ -136,7 +140,9 @@ impl<'a> Responder<'a> for StaticResponse {
 
         let mut response = Response::build();
 
-        let cm = request.guard::<State<StaticContextManager>>().expect("StaticContextManager registered in on_attach");
+        let cm = request
+            .guard::<State<StaticContextManager>>()
+            .expect("StaticContextManager registered in on_attach");
 
         let (mime, data, etag) = {
             let mut resources = cm.resources.lock().unwrap();
@@ -173,7 +179,9 @@ impl<'a> Responder<'a> for StaticResponse {
 
         let mut response = Response::build();
 
-        let cm = request.guard::<State<StaticContextManager>>().expect("StaticContextManager registered in on_attach");
+        let cm = request
+            .guard::<State<StaticContextManager>>()
+            .expect("StaticContextManager registered in on_attach");
 
         let (mime, data, etag) = {
             let resources: &StaticResources = &cm.resources;

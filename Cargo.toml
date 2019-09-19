@@ -1,7 +1,8 @@
 [package]
 name = "rocket-include-static-resources"
-version = "0.9.2"
+version = "0.9.3"
 authors = ["Magic Len <len@magiclen.org>"]
+edition = "2018"
 repository = "https://github.com/magiclen/rocket-include-static-resources"
 homepage = "https://magiclen.org/rocket-include-static-resources"
 keywords = ["rocket", "server", "web", "static", "file"]
@@ -17,8 +18,8 @@ branch = "master"
 [dependencies]
 rocket = "0.4.2"
 mime = "0.3.13"
-mime_guess = " 2.0.0"
+mime_guess = " 2"
 crc-any = "2"
-rc-u8-reader = "2.0.0"
+rc-u8-reader = "2"
 
 rocket-etag-if-none-match = "0.3"

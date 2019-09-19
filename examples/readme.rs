@@ -28,11 +28,12 @@ fn main() {
         .attach(StaticResponse::fairing(|resources| {
             static_resources_initialize!(
                 resources,
-
-                "favicon", "examples/front-end/images/favicon.ico",
-                "favicon-png", "examples/front-end/images/favicon-16.png",
-
-                "html-readme", "examples/front-end/html/README.html",
+                "favicon",
+                "examples/front-end/images/favicon.ico",
+                "favicon-png",
+                "examples/front-end/images/favicon-16.png",
+                "html-readme",
+                "examples/front-end/html/README.html",
             );
         }))
         .mount("/", routes![favicon, favicon_png])

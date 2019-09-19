@@ -1,17 +1,18 @@
 use std::collections::HashMap;
-use std::path::PathBuf;
-use std::time::SystemTime;
 use std::fs;
 use std::io::{self, ErrorKind};
+use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::SystemTime;
 
-use crate::{Mime, EntityTag};
 use crate::functions::{compute_data_etag, guess_mime};
+use crate::{EntityTag, Mime};
 
 #[derive(Debug)]
+#[allow(clippy::type_complexity)]
 /// Reloadable file resources.
 pub struct FileResources {
-    resources: HashMap<&'static str, (PathBuf, Mime, Arc<Vec<u8>>, EntityTag, Option<SystemTime>)>
+    resources: HashMap<&'static str, (PathBuf, Mime, Arc<Vec<u8>>, EntityTag, Option<SystemTime>)>,
 }
 
 impl FileResources {
@@ -19,13 +20,17 @@ impl FileResources {
     /// Create an instance of `FileResources`.
     pub fn new() -> FileResources {
         FileResources {
-            resources: HashMap::new()
+            resources: HashMap::new(),
         }
     }
 
     #[inline]
     /// Register a resource from a path and it can be reloaded automatically.
-    pub fn register_resource_file<P: Into<PathBuf>>(&mut self, name: &'static str, file_path: P) -> Result<(), io::Error> {
+    pub fn register_resource_file<P: Into<PathBuf>>(
+        &mut self,
+        name: &'static str,
+        file_path: P,
+    ) -> Result<(), io::Error> {
         let file_path = file_path.into();
 
         let metadata = file_path.metadata()?;
@@ -49,40 +54,28 @@ impl FileResources {
         let name = name.as_ref();
 
         match self.resources.remove(name) {
-            Some((file_path, _, _, _, _)) => {
-                Some(file_path)
-            }
-            None => {
-                None
-            }
+            Some((file_path, _, _, _, _)) => Some(file_path),
+            None => None,
         }
     }
 
     #[inline]
     /// Reload resources if needed.
     pub fn reload_if_needed(&mut self) -> Result<(), io::Error> {
-        for (_, (file_path, _, data, etag, mtime)) in &mut self.resources {
+        for (file_path, _, data, etag, mtime) in self.resources.values_mut() {
             let metadata = file_path.metadata()?;
 
             let (reload, new_mtime) = match mtime {
                 Some(mtime) => {
                     match metadata.modified() {
-                        Ok(new_mtime) => {
-                            (new_mtime > *mtime, Some(new_mtime))
-                        }
-                        Err(_) => {
-                            (true, None)
-                        }
+                        Ok(new_mtime) => (new_mtime > *mtime, Some(new_mtime)),
+                        Err(_) => (true, None),
                     }
                 }
                 None => {
                     match metadata.modified() {
-                        Ok(new_mtime) => {
-                            (true, Some(new_mtime))
-                        }
-                        Err(_) => {
-                            (true, None)
-                        }
+                        Ok(new_mtime) => (true, Some(new_mtime)),
+                        Err(_) => (true, None),
                     }
                 }
             };
@@ -105,33 +98,35 @@ impl FileResources {
 
     #[inline]
     /// Get the specific resource.
-    pub fn get_resource<S: AsRef<str>>(&mut self, name: S, reload_if_needed: bool) -> Result<(&Mime, Arc<Vec<u8>>, &EntityTag), io::Error> {
+    pub fn get_resource<S: AsRef<str>>(
+        &mut self,
+        name: S,
+        reload_if_needed: bool,
+    ) -> Result<(&Mime, Arc<Vec<u8>>, &EntityTag), io::Error> {
         let name = name.as_ref();
 
         if reload_if_needed {
-            let (file_path, mime, data, etag, mtime) = self.resources.get_mut(name).ok_or(io::Error::new(ErrorKind::NotFound, format!("The name `{}` is not found.", name)))?;
+            let (file_path, mime, data, etag, mtime) =
+                self.resources.get_mut(name).ok_or_else(|| {
+                    io::Error::new(
+                        ErrorKind::NotFound,
+                        format!("The name `{}` is not found.", name),
+                    )
+                })?;
 
             let metadata = file_path.metadata()?;
 
             let (reload, new_mtime) = match mtime {
                 Some(mtime) => {
                     match metadata.modified() {
-                        Ok(new_mtime) => {
-                            (new_mtime > *mtime, Some(new_mtime))
-                        }
-                        Err(_) => {
-                            (true, None)
-                        }
+                        Ok(new_mtime) => (new_mtime > *mtime, Some(new_mtime)),
+                        Err(_) => (true, None),
                     }
                 }
                 None => {
                     match metadata.modified() {
-                        Ok(new_mtime) => {
-                            (true, Some(new_mtime))
-                        }
-                        Err(_) => {
-                            (true, None)
-                        }
+                        Ok(new_mtime) => (true, Some(new_mtime)),
+                        Err(_) => (true, None),
                     }
                 }
             };
@@ -150,7 +145,22 @@ impl FileResources {
 
             Ok((mime, data.clone(), etag))
         } else {
-            self.resources.get(name).map(|(_, mime, data, etag, _)| (mime, data.clone(), etag)).ok_or(io::Error::new(ErrorKind::NotFound, format!("The name `{}` is not found.", name)))
+            self.resources
+                .get(name)
+                .map(|(_, mime, data, etag, _)| (mime, data.clone(), etag))
+                .ok_or_else(|| {
+                    io::Error::new(
+                        ErrorKind::NotFound,
+                        format!("The name `{}` is not found.", name),
+                    )
+                })
         }
+    }
+}
+
+impl Default for FileResources {
+    #[inline]
+    fn default() -> Self {
+        FileResources::new()
     }
 }

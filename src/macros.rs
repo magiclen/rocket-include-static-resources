@@ -27,11 +27,9 @@ macro_rules! static_resources_initialize {
 /// Used for retrieving the file you input through the macro `static_resources_initialize!` as a Response instance into which three HTTP headers, **Content-Type**, **Content-Length** and **Etag**, will be automatically added.
 #[macro_export]
 macro_rules! static_response {
-    ( $name:expr ) => {
-        {
-            use ::rocket_include_static_resources::StaticResponse;
+    ($name:expr) => {{
+        use rocket_include_static_resources::StaticResponse;
 
-            StaticResponse::build($name)
-        }
-    };
+        StaticResponse::build($name)
+    }};
 }
