@@ -156,7 +156,7 @@ impl<'a> Responder<'a> for StaticResponse {
 
                         return response.ok();
                     } else {
-                        (mime.to_string(), data.clone(), etag.to_string())
+                        (mime.to_string(), data, etag.to_string())
                     }
                 }
                 Err(_) => {

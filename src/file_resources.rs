@@ -53,10 +53,7 @@ impl FileResources {
     pub fn unregister_resource_file<S: AsRef<str>>(&mut self, name: S) -> Option<PathBuf> {
         let name = name.as_ref();
 
-        match self.resources.remove(name) {
-            Some((file_path, _, _, _, _)) => Some(file_path),
-            None => None,
-        }
+        self.resources.remove(name).map(|(file_path, _, _, _, _)| file_path)
     }
 
     #[inline]
