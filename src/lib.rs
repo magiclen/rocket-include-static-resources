@@ -1,214 +1,76 @@
 /*!
 # Include Static Resources for Rocket Framework
 
-This is a crate which provides macros `static_resources_initialize!` and `static_response!` to statically include files from your Rust project and make them be the HTTP response sources quickly.
+This is a crate which provides macros `static_resources_initializer!` and `static_response_handler!` to statically include files from your Rust project and make them be the HTTP response sources quickly.
 
 ## Example
 
 ```rust,ignore
-#![feature(proc_macro_hygiene, decl_macro)]
-
 #[macro_use]
 extern crate rocket;
 
 #[macro_use]
 extern crate rocket_include_static_resources;
 
-use rocket_include_static_resources::StaticResponse;
+use rocket::State;
 
-#[get("/favicon.ico")]
-fn favicon() -> StaticResponse {
-    static_response!("favicon")
-}
+use rocket_include_static_resources::{EtagIfNoneMatch, StaticContextManager, StaticResponse};
 
-#[get("/favicon-16.png")]
-fn favicon_png() -> StaticResponse {
-    static_response!("favicon-png")
+static_response_handler! {
+    "/favicon.ico" => favicon => "favicon",
+    "/favicon-16.png" => favicon_png => "favicon-png",
 }
 
 #[get("/")]
-fn index() -> StaticResponse {
-    static_response!("html-readme")
+fn index(
+    static_resources: State<StaticContextManager>,
+    etag_if_none_match: EtagIfNoneMatch,
+) -> StaticResponse {
+    static_resources.build(&etag_if_none_match, "html-readme")
 }
 
-fn main() {
-    rocket::ignite()
-        .attach(StaticResponse::fairing(|resources| {
-            static_resources_initialize!(
-                resources,
-
-                "favicon", "examples/front-end/images/favicon.ico",
-                "favicon-png", "examples/front-end/images/favicon-16.png",
-
-                "html-readme", "examples/front-end/html/README.html",
-            );
-        }))
+#[launch]
+fn rocket() -> _ {
+    rocket::build()
+        .attach(static_resources_initializer!(
+            "favicon" => "examples/front-end/images/favicon.ico",
+            "favicon-png" => "examples/front-end/images/favicon-16.png",
+            "html-readme" => "examples/front-end/html/README.html",
+        ))
         .mount("/", routes![favicon, favicon_png])
         .mount("/", routes![index])
-        .launch();
 }
 ```
 
-* `static_resources_initialize!` is used for including files into your executable binary file. You need to specify each file's name and its path. For instance, the above example uses **favicon** to represent the file **included-static-resources/favicon.ico** and **favicon_png** to represent the file **included-static-resources/favicon.png**. A name cannot be repeating. In order to reduce the compilation time and allow to hot-reload resources, files are compiled into your executable binary file together, only when you are using the **release** profile.
-* `static_response!` is used for retrieving the file you input through the macro `static_resources_initialize!` as a Response instance into which three HTTP headers, **Content-Type**, **Content-Length** and **Etag**, will be automatically added.
+* `static_resources_initializer!` is used for including files into your executable binary file. You need to specify each file's name and its path. For instance, the above example uses **favicon** to represent the file **included-static-resources/favicon.ico** and **favicon_png** to represent the file **included-static-resources/favicon.png**. A name cannot be repeating. In order to reduce the compilation time and allow to hot-reload resources, files are compiled into your executable binary file together, only when you are using the **release** profile.
+* `static_response_handler!` is used for quickly creating **GET** route handlers to retrieve static resources.
 
 See `examples`.
 */
-
-mod fairing;
-mod file_resources;
-mod functions;
-mod macros;
-mod manager;
-mod static_resources;
-
-extern crate crc_any;
-extern crate mime;
-extern crate mime_guess;
-extern crate rc_u8_reader;
 
 extern crate rocket;
 
 extern crate rocket_etag_if_none_match;
 
-#[cfg(not(debug_assertions))]
-use std::io::Cursor;
+extern crate mime;
+
+mod functions;
+
+mod macros;
+
 #[cfg(debug_assertions)]
-use std::sync::MutexGuard;
+mod debug;
+
+#[cfg(not(debug_assertions))]
+mod release;
+
+#[cfg(debug_assertions)]
+pub use debug::*;
+
+#[cfg(not(debug_assertions))]
+pub use release::*;
 
 use mime::Mime;
-#[cfg(debug_assertions)]
-use rc_u8_reader::ArcU8Reader;
 
-use rocket::fairing::Fairing;
-use rocket::http::Status;
-use rocket::request::Request;
-use rocket::response::{self, Responder, Response};
-use rocket::State;
-
-use rocket_etag_if_none_match::{EntityTag, EtagIfNoneMatch};
-
-use fairing::StaticResponseFairing;
-pub use file_resources::FileResources;
-pub use manager::StaticContextManager;
-pub use static_resources::StaticResources;
-
-#[derive(Debug)]
-/// To respond a static resource.
-pub struct StaticResponse {
-    name: &'static str,
-}
-
-impl StaticResponse {
-    #[inline]
-    /// Build a `StaticResponse` instance.
-    pub fn build(name: &'static str) -> StaticResponse {
-        StaticResponse {
-            name,
-        }
-    }
-}
-
-impl StaticResponse {
-    #[cfg(debug_assertions)]
-    #[inline]
-    /// Create the fairing of `HandlebarsResponse`.
-    pub fn fairing<F>(f: F) -> impl Fairing
-    where
-        F: Fn(&mut MutexGuard<FileResources>) + Send + Sync + 'static, {
-        StaticResponseFairing {
-            custom_callback: Box::new(f),
-        }
-    }
-
-    #[cfg(not(debug_assertions))]
-    #[inline]
-    /// Create the fairing of `HandlebarsResponse`.
-    pub fn fairing<F>(f: F) -> impl Fairing
-    where
-        F: Fn(&mut StaticResources) + Send + Sync + 'static, {
-        StaticResponseFairing {
-            custom_callback: Box::new(f),
-        }
-    }
-}
-
-impl<'a> Responder<'a> for StaticResponse {
-    #[cfg(debug_assertions)]
-    fn respond_to(self, request: &Request) -> response::Result<'a> {
-        let client_etag = request.guard::<EtagIfNoneMatch>().unwrap();
-
-        let mut response = Response::build();
-
-        let cm = request
-            .guard::<State<StaticContextManager>>()
-            .expect("StaticContextManager registered in on_attach");
-
-        let (mime, data, etag) = {
-            let mut resources = cm.resources.lock().unwrap();
-
-            match resources.get_resource(self.name, true) {
-                Ok((mime, data, etag)) => {
-                    let is_etag_match = client_etag.weak_eq(&etag);
-
-                    if is_etag_match {
-                        response.status(Status::NotModified);
-
-                        return response.ok();
-                    } else {
-                        (mime.to_string(), data, etag.to_string())
-                    }
-                }
-                Err(_) => {
-                    return Err(Status::InternalServerError);
-                }
-            }
-        };
-
-        response
-            .raw_header("ETag", etag)
-            .raw_header("Content-Type", mime)
-            .sized_body(ArcU8Reader::new(data));
-
-        response.ok()
-    }
-
-    #[cfg(not(debug_assertions))]
-    fn respond_to(self, request: &Request) -> response::Result<'a> {
-        let client_etag = request.guard::<EtagIfNoneMatch>().unwrap();
-
-        let mut response = Response::build();
-
-        let cm = request
-            .guard::<State<StaticContextManager>>()
-            .expect("StaticContextManager registered in on_attach");
-
-        let (mime, data, etag) = {
-            let resources: &StaticResources = &cm.resources;
-
-            match resources.get_resource(self.name) {
-                Some((mime, data, etag)) => {
-                    let is_etag_match = client_etag.weak_eq(&etag);
-
-                    if is_etag_match {
-                        response.status(Status::NotModified);
-
-                        return response.ok();
-                    } else {
-                        (mime.to_string(), data, etag.to_string())
-                    }
-                }
-                None => {
-                    return Err(Status::InternalServerError);
-                }
-            }
-        };
-
-        response
-            .raw_header("ETag", etag)
-            .raw_header("Content-Type", mime)
-            .sized_body(Cursor::new(data));
-
-        response.ok()
-    }
-}
+pub use rocket_etag_if_none_match::entity_tag::EntityTag;
+pub use rocket_etag_if_none_match::EtagIfNoneMatch;

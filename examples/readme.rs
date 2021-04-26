@@ -1,42 +1,34 @@
-#![feature(proc_macro_hygiene, decl_macro)]
-
 #[macro_use]
 extern crate rocket;
 
 #[macro_use]
 extern crate rocket_include_static_resources;
 
-use rocket_include_static_resources::StaticResponse;
+use rocket::State;
 
-#[get("/favicon.ico")]
-fn favicon() -> StaticResponse {
-    static_response!("favicon")
-}
+use rocket_include_static_resources::{EtagIfNoneMatch, StaticContextManager, StaticResponse};
 
-#[get("/favicon-16.png")]
-fn favicon_png() -> StaticResponse {
-    static_response!("favicon-png")
+static_response_handler! {
+    "/favicon.ico" => favicon => "favicon",
+    "/favicon-16.png" => favicon_png => "favicon-png",
 }
 
 #[get("/")]
-fn index() -> StaticResponse {
-    static_response!("html-readme")
+fn index(
+    static_resources: State<StaticContextManager>,
+    etag_if_none_match: EtagIfNoneMatch,
+) -> StaticResponse {
+    static_resources.build(&etag_if_none_match, "html-readme")
 }
 
-fn main() {
-    rocket::ignite()
-        .attach(StaticResponse::fairing(|resources| {
-            static_resources_initialize!(
-                resources,
-                "favicon",
-                "examples/front-end/images/favicon.ico",
-                "favicon-png",
-                "examples/front-end/images/favicon-16.png",
-                "html-readme",
-                "examples/front-end/html/README.html",
-            );
-        }))
+#[launch]
+fn rocket() -> _ {
+    rocket::build()
+        .attach(static_resources_initializer!(
+            "favicon" => "examples/front-end/images/favicon.ico",
+            "favicon-png" => "examples/front-end/images/favicon-16.png",
+            "html-readme" => "examples/front-end/html/README.html",
+        ))
         .mount("/", routes![favicon, favicon_png])
         .mount("/", routes![index])
-        .launch();
 }

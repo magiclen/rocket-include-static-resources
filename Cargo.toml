@@ -1,26 +1,21 @@
 [package]
 name = "rocket-include-static-resources"
-version = "0.9.6"
+version = "0.10.0"
 authors = ["Magic Len <len@magiclen.org>"]
 edition = "2018"
 repository = "https://github.com/magiclen/rocket-include-static-resources"
 homepage = "https://magiclen.org/rocket-include-static-resources"
 keywords = ["rocket", "server", "web", "static", "file"]
 categories = ["web-programming"]
-description = "This is a crate which provides macros `static_resources_initialize!` and `static_response!` to statically include files from your Rust project and make them be the HTTP response sources quickly."
+description = "This is a crate which provides macros `static_resources_initializer!` and `static_response_handler!` to statically include files from your Rust project and make them be the HTTP response sources quickly."
 readme = "README.md"
 license = "MIT"
 include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
 
-[badges.travis-ci]
-repository = "magiclen/rocket-include-static-resources"
-branch = "master"
-
 [dependencies]
-rocket = "0.4.2"
+rocket = { git = "https://github.com/SergioBenitez/Rocket", version = "0.5.0-dev" }
 mime = "0.3.13"
 mime_guess = " 2"
-crc-any = "2"
-rc-u8-reader = "2"
+rc-u8-reader = { version = "2.0.14", features = ["tokio"] }
 
-rocket-etag-if-none-match = "0.3"
+rocket-etag-if-none-match = { git = "https://github.com/magiclen/rocket-etag-if-none-match", version = "0.4.0" }

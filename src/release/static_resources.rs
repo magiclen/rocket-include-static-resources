@@ -5,22 +5,29 @@ use crate::functions::{compute_data_etag, guess_mime};
 use crate::{EntityTag, Mime};
 
 #[derive(Debug)]
+struct Resource {
+    mime: Mime,
+    data: &'static [u8],
+    etag: EntityTag<'static>,
+}
+
+#[derive(Debug)]
 /// Static resources.
 pub struct StaticResources {
-    resources: HashMap<&'static str, (Mime, &'static [u8], EntityTag)>,
+    resources: HashMap<&'static str, Resource>,
 }
 
 impl StaticResources {
-    #[inline]
     /// Create an instance of `StaticResources`.
+    #[inline]
     pub fn new() -> StaticResources {
         StaticResources {
             resources: HashMap::new(),
         }
     }
 
-    #[inline]
     /// Register a static resource.
+    #[inline]
     pub fn register_resource_static<P: AsRef<Path>>(
         &mut self,
         name: &'static str,
@@ -31,18 +38,24 @@ impl StaticResources {
 
         let mime = guess_mime(path);
 
-        self.resources.insert(name, (mime, data, etag));
+        let resource = Resource {
+            mime,
+            data,
+            etag,
+        };
+
+        self.resources.insert(name, resource);
     }
 
-    #[inline]
     /// Get the specific resource.
+    #[inline]
     pub fn get_resource<S: AsRef<str>>(
         &self,
         name: S,
-    ) -> Option<(&Mime, &'static [u8], &EntityTag)> {
+    ) -> Option<(&Mime, &'static [u8], &EntityTag<'static>)> {
         let name = name.as_ref();
 
-        self.resources.get(name).map(|(mime, data, etag)| (mime, *data, etag))
+        self.resources.get(name).map(|resource| (&resource.mime, resource.data, &resource.etag))
     }
 }
 
