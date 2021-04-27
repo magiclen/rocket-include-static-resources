@@ -19,3 +19,10 @@ mime_guess = " 2"
 rc-u8-reader = { version = "2.0.14", features = ["tokio"] }
 
 rocket-etag-if-none-match = { git = "https://github.com/magiclen/rocket-etag-if-none-match", version = "0.4.0" }
+rocket-cache-response = { git = "https://github.com/magiclen/rocket-cache-response", version = "0.6", optional = true }
+
+[features]
+cache = ["rocket-cache-response"]
+
+[package.metadata.docs.rs]
+all-features = true

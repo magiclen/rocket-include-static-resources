@@ -48,9 +48,13 @@ fn rocket() -> _ {
 See `examples`.
 */
 
-extern crate rocket;
+#[doc(hidden)]
+pub extern crate rocket;
 
 extern crate rocket_etag_if_none_match;
+
+#[cfg(feature = "cache")]
+extern crate rocket_cache_response;
 
 extern crate mime;
 
@@ -74,3 +78,6 @@ use mime::Mime;
 
 pub use rocket_etag_if_none_match::entity_tag::EntityTag;
 pub use rocket_etag_if_none_match::EtagIfNoneMatch;
+
+#[cfg(feature = "cache")]
+pub use rocket_cache_response::CacheResponse;

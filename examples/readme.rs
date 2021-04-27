@@ -13,6 +13,13 @@ static_response_handler! {
     "/favicon-16.png" => favicon_png => "favicon-png",
 }
 
+#[cfg(feature = "cache")]
+cached_static_response_handler! {
+    259_200;
+    "/favicon.ico" => cached_favicon => "favicon",
+    "/favicon-16.png" => cached_favicon_png => "favicon-png",
+}
+
 #[get("/")]
 fn index(
     static_resources: State<StaticContextManager>,
@@ -23,12 +30,22 @@ fn index(
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build()
+    let rocket = rocket::build()
         .attach(static_resources_initializer!(
             "favicon" => "examples/front-end/images/favicon.ico",
             "favicon-png" => "examples/front-end/images/favicon-16.png",
             "html-readme" => "examples/front-end/html/README.html",
         ))
         .mount("/", routes![favicon, favicon_png])
-        .mount("/", routes![index])
+        .mount("/", routes![index]);
+
+    #[cfg(feature = "cache")]
+    {
+        rocket.mount("/cache", routes![cached_favicon, cached_favicon_png])
+    }
+
+    #[cfg(not(feature = "cache"))]
+    {
+        rocket
+    }
 }
