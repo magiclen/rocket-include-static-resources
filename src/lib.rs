@@ -51,6 +51,9 @@ See `examples`.
 #[doc(hidden)]
 pub extern crate rocket;
 
+#[doc(hidden)]
+pub extern crate slash_formatter;
+
 extern crate rocket_etag_if_none_match;
 
 #[cfg(feature = "cache")]

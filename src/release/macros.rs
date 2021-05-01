@@ -3,7 +3,7 @@
 macro_rules! static_resources_initialize {
     ( $resources:expr, $($name:expr => $path:expr), * $(,)* ) => {
         $(
-            $resources.register_resource_static($name, concat!(env!("CARGO_MANIFEST_DIR"), "/", $path), include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/", $path)));
+            $resources.register_resource_static($name, $path, include_bytes!($crate::slash_formatter::concat_with_file_separator_debug_release!(env!("CARGO_MANIFEST_DIR"), $path)));
         )*
     };
 }
