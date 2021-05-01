@@ -42,7 +42,7 @@ fn rocket() -> _ {
 }
 ```
 
-* `static_resources_initializer!` is used for including files into your executable binary file. You need to specify each file's name and its path. For instance, the above example uses **favicon** to represent the file **included-static-resources/favicon.ico** and **favicon_png** to represent the file **included-static-resources/favicon.png**. A name cannot be repeating. In order to reduce the compilation time and allow to hot-reload resources, files are compiled into your executable binary file together, only when you are using the **release** profile.
+* `static_resources_initializer!` is used for including files into your executable binary file. You need to specify each file's name and its path relative to the directory containing the manifest of your package. For instance, the above example uses **favicon** to represent the file **included-static-resources/favicon.ico** and **favicon_png** to represent the file **included-static-resources/favicon.png**. A name cannot be repeating. In order to reduce the compilation time and allow to hot-reload resources, files are compiled into your executable binary file together, only when you are using the **release** profile.
 * `static_response_handler!` is used for quickly creating **GET** route handlers to retrieve static resources.
 
 See `examples`.
