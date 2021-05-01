@@ -51,15 +51,15 @@ See `examples`.
 #[doc(hidden)]
 pub extern crate rocket;
 
-#[doc(hidden)]
-pub extern crate slash_formatter;
-
 extern crate rocket_etag_if_none_match;
 
 #[cfg(feature = "cache")]
 extern crate rocket_cache_response;
 
 extern crate mime;
+
+#[doc(hidden)]
+pub extern crate slash_formatter;
 
 mod functions;
 
