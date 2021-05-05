@@ -34,7 +34,7 @@ fn rocket() -> _ {
         .attach(static_resources_initializer!(
             "favicon" => "examples/front-end/images/favicon.ico",
             "favicon-png" => "examples/front-end/images/favicon-16.png",
-            "html-readme" => "examples/front-end/html/README.html",
+            "html-readme" => ("examples", "front-end", "html", "README.html"),
         ))
         .mount("/", routes![favicon, favicon_png])
         .mount("/", routes![index]);

@@ -1,8 +1,8 @@
 use std::collections::HashMap;
-use std::path::Path;
 
-use crate::functions::{compute_data_etag, guess_mime};
-use crate::{EntityTag, Mime};
+use crate::functions::compute_data_etag;
+use crate::mime::Mime;
+use crate::EntityTag;
 
 #[derive(Debug)]
 struct Resource {
@@ -28,15 +28,13 @@ impl StaticResources {
 
     /// Register a static resource.
     #[inline]
-    pub fn register_resource_static<P: AsRef<Path>>(
+    pub fn register_resource_static(
         &mut self,
         name: &'static str,
-        path: P,
+        mime: Mime,
         data: &'static [u8],
     ) {
         let etag = compute_data_etag(data);
-
-        let mime = guess_mime(path);
 
         let resource = Resource {
             mime,

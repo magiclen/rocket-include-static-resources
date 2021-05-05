@@ -3,7 +3,7 @@
 macro_rules! static_resources_initialize {
     ( $resources:expr, $($name:expr => $path:expr), * $(,)* ) => {
         $(
-            $resources.register_resource_file($name, $crate::slash_formatter::concat_with_file_separator_debug_release!(env!("CARGO_MANIFEST_DIR"), $path)).unwrap();
+            $resources.register_resource_file($name, $crate::manifest_dir_macros::not_directory_path!($path)).unwrap();
         )*
     };
 }

@@ -35,7 +35,7 @@ fn rocket() -> _ {
         .attach(static_resources_initializer!(
             "favicon" => "examples/front-end/images/favicon.ico",
             "favicon-png" => "examples/front-end/images/favicon-16.png",
-            "html-readme" => "examples/front-end/html/README.html",
+            "html-readme" => ("examples", "front-end", "html", "README.html"),
         ))
         .mount("/", routes![favicon, favicon_png])
         .mount("/", routes![index])
@@ -56,10 +56,11 @@ extern crate rocket_etag_if_none_match;
 #[cfg(feature = "cache")]
 extern crate rocket_cache_response;
 
-extern crate mime;
+#[doc(hidden)]
+pub extern crate mime;
 
 #[doc(hidden)]
-pub extern crate slash_formatter;
+pub extern crate manifest_dir_macros;
 
 mod functions;
 
@@ -76,8 +77,6 @@ pub use debug::*;
 
 #[cfg(not(debug_assertions))]
 pub use release::*;
-
-use mime::Mime;
 
 pub use rocket_etag_if_none_match::entity_tag::EntityTag;
 pub use rocket_etag_if_none_match::EtagIfNoneMatch;

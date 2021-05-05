@@ -7,8 +7,11 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::SystemTime;
 
-use crate::functions::{compute_data_etag, guess_mime};
-use crate::{EntityTag, Mime};
+use crate::functions::compute_data_etag;
+use crate::mime;
+use crate::EntityTag;
+
+use mime::Mime;
 
 #[derive(Debug)]
 struct Resource {
@@ -52,7 +55,15 @@ impl FileResources {
 
         let etag = compute_data_etag(&data);
 
-        let mime = guess_mime(&path);
+        let mime = match path.extension() {
+            Some(extension) => {
+                match extension.to_str() {
+                    Some(extension) => mime_guess::from_ext(extension).first_or_octet_stream(),
+                    None => mime::APPLICATION_OCTET_STREAM,
+                }
+            }
+            None => mime::APPLICATION_OCTET_STREAM,
+        };
 
         let resource = Resource {
             path,
