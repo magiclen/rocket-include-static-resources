@@ -3,15 +3,7 @@
 macro_rules! static_resources_initialize {
     ( $resources:expr, $($name:expr => $path:expr), * $(,)* ) => {
         $(
-            $resources.register_resource_static($name, {
-                let mime = $crate::manifest_dir_macros::mime_guess!($path);
-
-                if mime.is_empty () {
-                    $crate::mime::APPLICATION_OCTET_STREAM
-                } else {
-                    mime.parse().unwrap_or($crate::mime::APPLICATION_OCTET_STREAM)
-                }
-            }, include_bytes!($crate::manifest_dir_macros::path!($path)));
+            $resources.register_resource_static($name, $crate::manifest_dir_macros::mime_guess!(default = "application/octet-stream", $path).parse().unwrap_or($crate::mime::APPLICATION_OCTET_STREAM), include_bytes!($crate::manifest_dir_macros::path!($path)));
         )*
     };
 }

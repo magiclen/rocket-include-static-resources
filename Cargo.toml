@@ -17,7 +17,7 @@ rocket = { git = "https://github.com/SergioBenitez/Rocket", version = "0.5.0-dev
 mime = "0.3.13"
 mime_guess = " 2"
 rc-u8-reader = { version = "2.0.14", features = ["tokio"] }
-manifest-dir-macros = { version = "0.1.10", features = ["tuple", "mime_guess"] }
+manifest-dir-macros = { version = "0.1.11", features = ["tuple", "mime_guess"] }
 
 rocket-etag-if-none-match = { git = "https://github.com/magiclen/rocket-etag-if-none-match", version = "0.4.0" }
 rocket-cache-response = { git = "https://github.com/magiclen/rocket-cache-response", version = "0.6", optional = true }
