@@ -1,4 +1,4 @@
-use std::sync::Mutex;
+use std::sync::{Mutex, PoisonError};
 
 use crate::{EtagIfNoneMatch, StaticResponse};
 
@@ -27,7 +27,7 @@ impl StaticContextManager {
     ) -> StaticResponse {
         self.resources
             .lock()
-            .unwrap()
+            .unwrap_or_else(PoisonError::into_inner)
             .get_resource(name.as_ref())
             .map(|resource| {
                 if etag_if_none_match.weak_eq(&resource.2) {

@@ -1,4 +1,4 @@
-use std::sync::{Mutex, MutexGuard};
+use std::sync::{Mutex, MutexGuard, PoisonError};
 
 use crate::rocket::fairing::{Fairing, Info, Kind};
 use crate::rocket::{Build, Rocket};
@@ -26,7 +26,7 @@ impl Fairing for StaticResponseFairing {
     async fn on_ignite(&self, rocket: Rocket<Build>) -> Result<Rocket<Build>, Rocket<Build>> {
         let resources = Mutex::new(FileResources::new());
 
-        (self.custom_callback)(&mut resources.lock().unwrap());
+        (self.custom_callback)(&mut resources.lock().unwrap_or_else(PoisonError::into_inner));
 
         let state = StaticContextManager::new(resources);
 
