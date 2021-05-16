@@ -25,7 +25,7 @@ static_response_handler! {
 
 #[get("/")]
 fn index(
-    static_resources: State<StaticContextManager>,
+    static_resources: &State<StaticContextManager>,
     etag_if_none_match: EtagIfNoneMatch,
 ) -> StaticResponse {
     static_resources.build(&etag_if_none_match, "html-readme")
