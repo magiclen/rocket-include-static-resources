@@ -20,7 +20,7 @@ macro_rules! static_response_handler {
         $(
             #[get($route)]
             fn $handler_name(
-                static_resources: $crate::rocket::State<$crate::StaticContextManager>,
+                static_resources: &$crate::rocket::State<$crate::StaticContextManager>,
                 etag_if_none_match: $crate::EtagIfNoneMatch,
             ) -> $crate::StaticResponse {
                 static_resources.build(&etag_if_none_match, $name)
@@ -37,7 +37,7 @@ macro_rules! cached_static_response_handler {
         $(
             #[get($route)]
             fn $handler_name(
-                static_resources: $crate::rocket::State<$crate::StaticContextManager>,
+                static_resources: &$crate::rocket::State<$crate::StaticContextManager>,
                 etag_if_none_match: $crate::EtagIfNoneMatch,
             ) -> $crate::CacheResponse<$crate::StaticResponse> {
                 let responder =  static_resources.build(&etag_if_none_match, $name);
