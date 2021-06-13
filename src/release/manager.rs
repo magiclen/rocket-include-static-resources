@@ -26,10 +26,10 @@ impl StaticContextManager {
         self.resources
             .get_resource(name.as_ref())
             .map(|resource| {
-                if etag_if_none_match.weak_eq(&resource.2) {
+                if etag_if_none_match.weak_eq(resource.2) {
                     StaticResponse::not_modified()
                 } else {
-                    StaticResponse::build(&resource.0, resource.1, &resource.2)
+                    StaticResponse::build(&resource.0, resource.1, resource.2)
                 }
             })
             .unwrap()
