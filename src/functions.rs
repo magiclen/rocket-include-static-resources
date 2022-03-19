@@ -1,5 +1,3 @@
-extern crate mime_guess;
-
 use crate::EntityTag;
 
 #[inline]

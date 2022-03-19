@@ -51,11 +51,6 @@ See `examples`.
 #[doc(hidden)]
 pub extern crate rocket;
 
-extern crate rocket_etag_if_none_match;
-
-#[cfg(feature = "cache")]
-extern crate rocket_cache_response;
-
 #[doc(hidden)]
 pub extern crate mime;
 

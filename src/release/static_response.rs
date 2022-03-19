@@ -1,6 +1,3 @@
-extern crate mime;
-extern crate rc_u8_reader;
-
 use std::io::Cursor;
 
 use mime::Mime;

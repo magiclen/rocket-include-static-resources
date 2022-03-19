@@ -1,8 +1,8 @@
 [package]
 name = "rocket-include-static-resources"
-version = "0.10.0"
+version = "0.10.1"
 authors = ["Magic Len <len@magiclen.org>"]
-edition = "2018"
+edition = "2021"
 repository = "https://github.com/magiclen/rocket-include-static-resources"
 homepage = "https://magiclen.org/rocket-include-static-resources"
 keywords = ["rocket", "server", "web", "static", "file"]
