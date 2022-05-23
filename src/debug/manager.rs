@@ -25,6 +25,16 @@ impl StaticContextManager {
         etag_if_none_match: &EtagIfNoneMatch<'_>,
         name: S,
     ) -> StaticResponse {
+        self.try_build(etag_if_none_match, name).unwrap()
+    }
+
+    /// Attempt to build a `StaticResponse`.
+    #[inline]
+    pub fn try_build<S: AsRef<str>>(
+        &self,
+        etag_if_none_match: &EtagIfNoneMatch<'_>,
+        name: S,
+    ) -> Result<StaticResponse, std::io::Error> {
         self.resources
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
@@ -36,6 +46,5 @@ impl StaticContextManager {
                     StaticResponse::build(&resource.0, resource.1.clone(), resource.2)
                 }
             })
-            .unwrap()
     }
 }
