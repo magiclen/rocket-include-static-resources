@@ -9,6 +9,7 @@ const FAIRING_NAME: &str = "Static Resources (Debug)";
 
 /// The fairing of `StaticResponse`.
 pub struct StaticResponseFairing {
+    #[allow(clippy::type_complexity)]
     pub(crate) custom_callback: Box<dyn Fn(&mut MutexGuard<FileResources>) + Send + Sync + 'static>,
 }
 
