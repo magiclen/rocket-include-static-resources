@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 
-use crate::functions::compute_data_etag;
-use crate::mime::Mime;
-use crate::EntityTag;
+use crate::{functions::compute_data_etag, mime::Mime, EntityTag};
 
 #[derive(Debug)]
 struct Resource {
@@ -22,7 +20,7 @@ impl StaticResources {
     #[inline]
     pub fn new() -> StaticResources {
         StaticResources {
-            resources: HashMap::new(),
+            resources: HashMap::new()
         }
     }
 

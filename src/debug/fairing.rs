@@ -1,9 +1,10 @@
 use std::sync::{Mutex, MutexGuard, PoisonError};
 
-use crate::rocket::fairing::{Fairing, Info, Kind};
-use crate::rocket::{Build, Rocket};
-
 use super::{FileResources, StaticContextManager, StaticResponse};
+use crate::rocket::{
+    fairing::{Fairing, Info, Kind},
+    Build, Rocket,
+};
 
 const FAIRING_NAME: &str = "Static Resources (Debug)";
 
@@ -18,8 +19,7 @@ impl Fairing for StaticResponseFairing {
     #[inline]
     fn info(&self) -> Info {
         Info {
-            name: FAIRING_NAME,
-            kind: Kind::Ignite,
+            name: FAIRING_NAME, kind: Kind::Ignite
         }
     }
 
@@ -42,7 +42,7 @@ impl StaticResponse {
     where
         F: Fn(&mut MutexGuard<FileResources>) + Send + Sync + 'static, {
         StaticResponseFairing {
-            custom_callback: Box::new(f),
+            custom_callback: Box::new(f)
         }
     }
 }

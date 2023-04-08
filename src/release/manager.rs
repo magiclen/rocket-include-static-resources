@@ -1,6 +1,5 @@
-use crate::{EtagIfNoneMatch, StaticResponse};
-
 use super::StaticResources;
+use crate::{EtagIfNoneMatch, StaticResponse};
 
 /// To monitor the state of static resources.
 #[derive(Debug)]

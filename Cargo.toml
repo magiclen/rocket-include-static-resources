@@ -3,6 +3,7 @@ name = "rocket-include-static-resources"
 version = "0.10.3"
 authors = ["Magic Len <len@magiclen.org>"]
 edition = "2021"
+rust-version = "1.63"
 repository = "https://github.com/magiclen/rocket-include-static-resources"
 homepage = "https://magiclen.org/rocket-include-static-resources"
 keywords = ["rocket", "server", "web", "static", "file"]
@@ -13,7 +14,7 @@ license = "MIT"
 include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
 
 [dependencies]
-rocket = "0.5.0-rc.2"
+rocket = "0.5.0-rc.3"
 mime = "0.3.13"
 mime_guess = " 2"
 rc-u8-reader = { version = "2.0.14", features = ["tokio"] }

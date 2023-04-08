@@ -1,23 +1,23 @@
-use std::collections::HashMap;
-use std::fs;
-use std::io::{self, ErrorKind};
-use std::path::PathBuf;
-use std::sync::Arc;
-use std::time::SystemTime;
-
-use crate::functions::compute_data_etag;
-use crate::mime;
-use crate::EntityTag;
+use std::{
+    collections::HashMap,
+    fs,
+    io::{self, ErrorKind},
+    path::PathBuf,
+    sync::Arc,
+    time::SystemTime,
+};
 
 use mime::Mime;
 
+use crate::{functions::compute_data_etag, mime, EntityTag};
+
 #[derive(Debug)]
 struct Resource {
-    path: PathBuf,
+    path:  PathBuf,
     // mime could be an atom `Mime`, so just clone it
-    mime: Mime,
-    data: Arc<Vec<u8>>,
-    etag: EntityTag<'static>,
+    mime:  Mime,
+    data:  Arc<Vec<u8>>,
+    etag:  EntityTag<'static>,
     mtime: Option<SystemTime>,
 }
 
@@ -32,7 +32,7 @@ impl FileResources {
     #[inline]
     pub fn new() -> FileResources {
         FileResources {
-            resources: HashMap::new(),
+            resources: HashMap::new()
         }
     }
 
@@ -54,12 +54,10 @@ impl FileResources {
         let etag = compute_data_etag(&data);
 
         let mime = match path.extension() {
-            Some(extension) => {
-                match extension.to_str() {
-                    Some(extension) => mime_guess::from_ext(extension).first_or_octet_stream(),
-                    None => mime::APPLICATION_OCTET_STREAM,
-                }
-            }
+            Some(extension) => match extension.to_str() {
+                Some(extension) => mime_guess::from_ext(extension).first_or_octet_stream(),
+                None => mime::APPLICATION_OCTET_STREAM,
+            },
             None => mime::APPLICATION_OCTET_STREAM,
         };
 
@@ -91,18 +89,14 @@ impl FileResources {
             let metadata = resource.path.metadata()?;
 
             let (reload, new_mtime) = match resource.mtime {
-                Some(mtime) => {
-                    match metadata.modified() {
-                        Ok(new_mtime) => (new_mtime > mtime, Some(new_mtime)),
-                        Err(_) => (true, None),
-                    }
-                }
-                None => {
-                    match metadata.modified() {
-                        Ok(new_mtime) => (true, Some(new_mtime)),
-                        Err(_) => (true, None),
-                    }
-                }
+                Some(mtime) => match metadata.modified() {
+                    Ok(new_mtime) => (new_mtime > mtime, Some(new_mtime)),
+                    Err(_) => (true, None),
+                },
+                None => match metadata.modified() {
+                    Ok(new_mtime) => (true, Some(new_mtime)),
+                    Err(_) => (true, None),
+                },
             };
 
             if reload {
@@ -137,18 +131,14 @@ impl FileResources {
         let metadata = resource.path.metadata()?;
 
         let (reload, new_mtime) = match resource.mtime {
-            Some(mtime) => {
-                match metadata.modified() {
-                    Ok(new_mtime) => (new_mtime > mtime, Some(new_mtime)),
-                    Err(_) => (true, None),
-                }
-            }
-            None => {
-                match metadata.modified() {
-                    Ok(new_mtime) => (true, Some(new_mtime)),
-                    Err(_) => (true, None),
-                }
-            }
+            Some(mtime) => match metadata.modified() {
+                Ok(new_mtime) => (new_mtime > mtime, Some(new_mtime)),
+                Err(_) => (true, None),
+            },
+            None => match metadata.modified() {
+                Ok(new_mtime) => (true, Some(new_mtime)),
+                Err(_) => (true, None),
+            },
         };
 
         if reload {

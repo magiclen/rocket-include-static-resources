@@ -1,7 +1,8 @@
-use crate::rocket::fairing::{Fairing, Info, Kind};
-use crate::rocket::{Build, Rocket};
-
 use super::{StaticContextManager, StaticResources, StaticResponse};
+use crate::rocket::{
+    fairing::{Fairing, Info, Kind},
+    Build, Rocket,
+};
 
 const FAIRING_NAME: &str = "Static Resources";
 
@@ -15,8 +16,7 @@ impl Fairing for StaticResponseFairing {
     #[inline]
     fn info(&self) -> Info {
         Info {
-            name: FAIRING_NAME,
-            kind: Kind::Ignite,
+            name: FAIRING_NAME, kind: Kind::Ignite
         }
     }
 
@@ -39,7 +39,7 @@ impl StaticResponse {
     where
         F: Fn(&mut StaticResources) + Send + Sync + 'static, {
         StaticResponseFairing {
-            custom_callback: Box::new(f),
+            custom_callback: Box::new(f)
         }
     }
 }

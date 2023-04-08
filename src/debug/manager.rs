@@ -1,8 +1,7 @@
 use std::sync::{Mutex, PoisonError};
 
-use crate::{EtagIfNoneMatch, StaticResponse};
-
 use super::FileResources;
+use crate::{EtagIfNoneMatch, StaticResponse};
 
 /// To monitor the state of static resources.
 #[derive(Debug)]

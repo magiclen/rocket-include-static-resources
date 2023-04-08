@@ -3,10 +3,14 @@ use std::sync::Arc;
 use mime::Mime;
 use rc_u8_reader::ArcU8Reader;
 
-use crate::rocket::http::Status;
-use crate::rocket::request::Request;
-use crate::rocket::response::{self, Responder, Response};
-use crate::EntityTag;
+use crate::{
+    rocket::{
+        http::Status,
+        request::Request,
+        response::{self, Responder, Response},
+    },
+    EntityTag,
+};
 
 #[derive(Debug)]
 struct StaticResponseInner {
@@ -40,7 +44,7 @@ impl StaticResponse {
     #[inline]
     pub(crate) const fn not_modified() -> StaticResponse {
         StaticResponse {
-            inner: None,
+            inner: None
         }
     }
 }

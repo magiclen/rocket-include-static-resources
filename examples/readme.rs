@@ -5,7 +5,6 @@ extern crate rocket;
 extern crate rocket_include_static_resources;
 
 use rocket::State;
-
 use rocket_include_static_resources::{EtagIfNoneMatch, StaticContextManager, StaticResponse};
 
 static_response_handler! {

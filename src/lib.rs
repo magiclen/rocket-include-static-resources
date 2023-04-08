@@ -69,12 +69,8 @@ mod release;
 
 #[cfg(debug_assertions)]
 pub use debug::*;
-
 #[cfg(not(debug_assertions))]
 pub use release::*;
-
-pub use rocket_etag_if_none_match::entity_tag::EntityTag;
-pub use rocket_etag_if_none_match::EtagIfNoneMatch;
-
 #[cfg(feature = "cache")]
 pub use rocket_cache_response::CacheResponse;
+pub use rocket_etag_if_none_match::{entity_tag::EntityTag, EtagIfNoneMatch};
