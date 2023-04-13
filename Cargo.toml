@@ -9,7 +9,6 @@ homepage = "https://magiclen.org/rocket-include-static-resources"
 keywords = ["rocket", "server", "web", "static", "file"]
 categories = ["web-programming"]
 description = "This is a crate which provides macros `static_resources_initializer!` and `static_response_handler!` to statically include files from your Rust project and make them be the HTTP response sources quickly."
-readme = "README.md"
 license = "MIT"
 include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
 
