@@ -22,6 +22,16 @@ impl StaticContextManager {
         etag_if_none_match: &EtagIfNoneMatch<'_>,
         name: S,
     ) -> StaticResponse {
+        self.try_build(etag_if_none_match, name).unwrap()
+    }
+
+    /// Attempt to build a `StaticResponse`.
+    #[inline]
+    pub fn try_build<S: AsRef<str>>(
+        &self,
+        etag_if_none_match: &EtagIfNoneMatch<'_>,
+        name: S,
+    ) -> Result<StaticResponse, std::io::Error> {
         self.resources
             .get_resource(name.as_ref())
             .map(|resource| {
@@ -31,6 +41,6 @@ impl StaticContextManager {
                     StaticResponse::build(&resource.0, resource.1, resource.2)
                 }
             })
-            .unwrap()
+            .ok_or(std::io::Error::new(std::io::ErrorKind::NotFound, format!("{} not found", name.as_ref())))
     }
 }
