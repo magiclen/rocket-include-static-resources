@@ -1,15 +1,14 @@
-use std::sync::Arc;
+use std::{io::Cursor, sync::Arc};
 
 use mime::Mime;
-use rc_u8_reader::ArcU8Reader;
 
 use crate::{
+    EntityTag,
     rocket::{
         http::Status,
         request::Request,
         response::{self, Responder, Response},
     },
-    EntityTag,
 };
 
 #[derive(Debug)]
@@ -52,13 +51,22 @@ impl StaticResponse {
 impl<'r, 'o: 'r> Responder<'r, 'o> for StaticResponse {
     #[inline]
     fn respond_to(self, _: &'r Request<'_>) -> response::Result<'o> {
+        #[derive(Debug)]
+        struct SharedBytes(Arc<Vec<u8>>);
+
+        impl AsRef<[u8]> for SharedBytes {
+            fn as_ref(&self) -> &[u8] {
+                self.0.as_slice()
+            }
+        }
+
         let mut response = Response::build();
 
         if let Some(inner) = self.inner {
             response.raw_header("Etag", inner.etag);
             response.raw_header("Content-Type", inner.mime);
 
-            response.sized_body(inner.data.len(), ArcU8Reader::new(inner.data));
+            response.sized_body(inner.data.len(), Cursor::new(SharedBytes(inner.data)));
         } else {
             response.status(Status::NotModified);
         }

@@ -3,12 +3,12 @@ use std::io::Cursor;
 use mime::Mime;
 
 use crate::{
+    EntityTag,
     rocket::{
         http::Status,
         request::Request,
         response::{self, Responder, Response},
     },
-    EntityTag,
 };
 
 #[derive(Debug)]

@@ -9,7 +9,7 @@ use std::{
 
 use mime::Mime;
 
-use crate::{functions::compute_data_etag, mime, EntityTag};
+use crate::{EntityTag, functions::compute_data_etag, mime};
 
 #[derive(Debug)]
 struct Resource {

@@ -42,7 +42,10 @@ macro_rules! cached_static_response_handler {
             ) -> $crate::CacheResponse<$crate::StaticResponse> {
                 let responder =  static_resources.build(&etag_if_none_match, $name);
 
-                $crate::CacheResponse::public_only_release(responder, $max_age, $must_revalidate)
+                $crate::CacheResponse::new(responder, $crate::CacheControl {
+                    must_revalidate:        $must_revalidate,
+                    ..$crate::CacheControl::public($max_age)
+                }).only_release()
             }
         )*
     };

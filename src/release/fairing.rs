@@ -1,7 +1,7 @@
 use super::{StaticContextManager, StaticResources, StaticResponse};
 use crate::rocket::{
-    fairing::{Fairing, Info, Kind},
     Build, Rocket,
+    fairing::{Fairing, Info, Kind},
 };
 
 const FAIRING_NAME: &str = "Static Resources";

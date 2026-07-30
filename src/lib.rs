@@ -48,6 +48,8 @@ fn rocket() -> _ {
 See `examples`.
 */
 
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
 #[doc(hidden)]
 pub extern crate rocket;
 
@@ -72,5 +74,5 @@ pub use debug::*;
 #[cfg(not(debug_assertions))]
 pub use release::*;
 #[cfg(feature = "cache")]
-pub use rocket_cache_response::CacheResponse;
-pub use rocket_etag_if_none_match::{entity_tag::EntityTag, EtagIfNoneMatch};
+pub use rocket_cache_response::{CacheControl, CacheResponse};
+pub use rocket_etag_if_none_match::{EtagIfNoneMatch, entity_tag::EntityTag};

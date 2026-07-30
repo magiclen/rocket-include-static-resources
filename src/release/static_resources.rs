@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{functions::compute_data_etag, mime::Mime, EntityTag};
+use crate::{EntityTag, functions::compute_data_etag, mime::Mime};
 
 #[derive(Debug)]
 struct Resource {
