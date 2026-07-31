@@ -14,7 +14,7 @@ use crate::{
 #[derive(Debug)]
 struct StaticResponseInner {
     mime: String,
-    data: Arc<Vec<u8>>,
+    data: Arc<[u8]>,
     etag: String,
 }
 
@@ -26,11 +26,7 @@ pub struct StaticResponse {
 
 impl StaticResponse {
     #[inline]
-    pub(crate) fn build(
-        mime: &Mime,
-        data: Arc<Vec<u8>>,
-        etag: &EntityTag<'static>,
-    ) -> StaticResponse {
+    pub(crate) fn build(mime: &Mime, data: Arc<[u8]>, etag: &EntityTag<'static>) -> StaticResponse {
         StaticResponse {
             inner: Some(StaticResponseInner {
                 mime: mime.to_string(),
@@ -51,22 +47,13 @@ impl StaticResponse {
 impl<'r, 'o: 'r> Responder<'r, 'o> for StaticResponse {
     #[inline]
     fn respond_to(self, _: &'r Request<'_>) -> response::Result<'o> {
-        #[derive(Debug)]
-        struct SharedBytes(Arc<Vec<u8>>);
-
-        impl AsRef<[u8]> for SharedBytes {
-            fn as_ref(&self) -> &[u8] {
-                self.0.as_slice()
-            }
-        }
-
         let mut response = Response::build();
 
         if let Some(inner) = self.inner {
             response.raw_header("Etag", inner.etag);
             response.raw_header("Content-Type", inner.mime);
 
-            response.sized_body(inner.data.len(), Cursor::new(SharedBytes(inner.data)));
+            response.sized_body(inner.data.len(), Cursor::new(inner.data));
         } else {
             response.status(Status::NotModified);
         }

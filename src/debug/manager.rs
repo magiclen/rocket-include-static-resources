@@ -32,7 +32,7 @@ impl StaticContextManager {
                 if etag_if_none_match.weak_eq(resource.2) {
                     StaticResponse::not_modified()
                 } else {
-                    StaticResponse::build(&resource.0, resource.1.clone(), resource.2)
+                    StaticResponse::build(&resource.0, resource.1, resource.2)
                 }
             })
             .unwrap()

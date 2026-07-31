@@ -16,7 +16,7 @@ struct Resource {
     path:  PathBuf,
     // mime could be an atom `Mime`, so just clone it
     mime:  Mime,
-    data:  Arc<Vec<u8>>,
+    data:  Arc<[u8]>,
     etag:  EntityTag<'static>,
     mtime: Option<SystemTime>,
 }
@@ -64,7 +64,7 @@ impl FileResources {
         let resource = Resource {
             path,
             mime,
-            data: Arc::new(data),
+            data: Arc::from(data),
             etag,
             mtime,
         };
@@ -104,7 +104,7 @@ impl FileResources {
 
                 let new_etag = compute_data_etag(&new_data);
 
-                resource.data = Arc::new(new_data);
+                resource.data = Arc::from(new_data);
 
                 resource.etag = new_etag;
 
@@ -121,11 +121,11 @@ impl FileResources {
     pub fn get_resource<S: AsRef<str>>(
         &mut self,
         name: S,
-    ) -> Result<(Mime, Arc<Vec<u8>>, &EntityTag<'static>), io::Error> {
+    ) -> Result<(Mime, Arc<[u8]>, &EntityTag<'static>), io::Error> {
         let name = name.as_ref();
 
         let resource = self.resources.get_mut(name).ok_or_else(|| {
-            io::Error::new(ErrorKind::NotFound, format!("The name `{}` is not found.", name))
+            io::Error::new(ErrorKind::NotFound, format!("The name `{name}` is not found."))
         })?;
 
         let metadata = resource.path.metadata()?;
@@ -146,7 +146,7 @@ impl FileResources {
 
             let new_etag = compute_data_etag(&new_data);
 
-            resource.data = Arc::new(new_data);
+            resource.data = Arc::from(new_data);
 
             resource.etag = new_etag;
 

@@ -33,8 +33,8 @@ impl Fairing for StaticResponseFairing {
 }
 
 impl StaticResponse {
+    /// Create the fairing of `StaticResponse`.
     #[inline]
-    /// Create the fairing of `HandlebarsResponse`.
     pub fn fairing<F>(f: F) -> impl Fairing
     where
         F: Fn(&mut StaticResources) + Send + Sync + 'static, {

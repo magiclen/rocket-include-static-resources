@@ -54,8 +54,8 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for StaticResponse {
         let mut response = Response::build();
 
         if let Some(inner) = self.inner {
-            response.raw_header("Etag", inner.etag.to_string());
-            response.raw_header("Content-Type", inner.mime.to_string());
+            response.raw_header("Etag", inner.etag);
+            response.raw_header("Content-Type", inner.mime);
 
             response.sized_body(inner.data.len(), Cursor::new(inner.data));
         } else {
